@@ -73,10 +73,21 @@ public interface IOndemandAnalysis {
      *
      * @param trace
      *            The trace on which to execute the analysis
+     * @param range
+     *            The timerange on which to execute the analysis. Null means the
+     *            whole trace.
+     * @param extraParams
+     *            Extra user-defined parameters to add to the analysis's
+     *            command.
      * @param monitor
-     *            The progress monitor, can be null for a default monitor
+     *            The progress monitor to use to display progress, if the
+     *            analysis supports it. You can pass 'new NullProgressMonitor()'
+     *            for a default monitor.
      * @return Whether the analysis completed successfully or not
+     * @throws OndemandAnalysisException
      */
-    Object execute(ITmfTrace trace, @Nullable TmfTimeRange range, String extraParams, @Nullable IProgressMonitor monitor);
+    Object execute(ITmfTrace trace, @Nullable TmfTimeRange range,
+            String extraParams, IProgressMonitor monitor) throws OndemandAnalysisException;
+
 
 }

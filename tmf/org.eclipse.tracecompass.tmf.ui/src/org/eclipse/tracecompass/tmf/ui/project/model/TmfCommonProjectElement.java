@@ -171,6 +171,16 @@ public abstract class TmfCommonProjectElement extends TmfProjectModelElement {
         return null;
     }
 
+    /**
+     * Get the child element "Reports".
+     *
+     * @return The Reports child element
+     * @since 2.0
+     */
+    public TmfReportsElement getReportsChildElement() {
+        return fReportsElement;
+    }
+
     // ------------------------------------------------------------------------
     // Operations
     // ------------------------------------------------------------------------
