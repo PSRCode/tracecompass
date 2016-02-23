@@ -19,6 +19,7 @@ import org.eclipse.osgi.util.NLS;
  * Message strings for TMF model handling.
  *
  * @author Jean-Christian Kouamé
+ * @noreference Message class
  */
 public class Messages extends NLS {
 
@@ -101,6 +102,10 @@ public class Messages extends NLS {
 
     /** Trace text */
     public static String TmfTraceElement_TypeName;
+
+    /** Name of the "Views" element */
+    public static String TmfViewsElement_Name;
+
     /**
      * The title for the select trace type dialog */
     public static String TmfTraceType_SelectTraceType;
