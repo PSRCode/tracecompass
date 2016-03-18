@@ -106,6 +106,12 @@ public class Messages extends NLS {
     /** Name of the "Views" element */
     public static String TmfViewsElement_Name;
 
+    /** Name of the element "On-demand Analyses" */
+    public static String TmfOndemandAnalysesElement_Name;
+
+    /** Name of the element "Reports" */
+    public static String TmfReportsElement_Name;
+
     /**
      * The title for the select trace type dialog */
     public static String TmfTraceType_SelectTraceType;
