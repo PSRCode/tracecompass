@@ -11,6 +11,7 @@ package org.eclipse.tracecompass.internal.provisional.analysis.lami.ui.viewers;
 
 import static org.eclipse.tracecompass.common.core.NonNullUtils.checkNotNull;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -45,7 +46,6 @@ import org.swtchart.IAxisTick;
 import org.swtchart.IBarSeries;
 import org.swtchart.ISeries;
 import org.swtchart.ISeries.SeriesType;
-import org.swtchart.Range;
 
 import com.google.common.collect.Iterators;
 
@@ -77,6 +77,10 @@ public class LamiBarChartViewer extends LamiXYChartViewer {
     private final String[] fCategories;
     private final Map<ISeries, List<Mapping>> fIndexPerSeriesMapping;
     private final Map<LamiTableEntry, Mapping> fEntryToCategoriesMap;
+
+    private LamiGraphRange fYInternalRange = new LamiGraphRange(checkNotNull(BigDecimal.ZERO), checkNotNull(BigDecimal.ONE));
+    private @Nullable LamiGraphRange fYExternalRange = null;
+
 
     /**
      * Creates a bar chart Viewer instance based on SWTChart.
@@ -124,6 +128,9 @@ public class LamiBarChartViewer extends LamiXYChartViewer {
 
         fCategories = xCategories.toArray(new String[0]);
 
+        /* The the y values range */
+        fYExternalRange = getRange(yAxisAspects, false);
+
         for (LamiTableEntryAspect yAxisAspect : yAxisAspects) {
             if (!yAxisAspect.isContinuous() || yAxisAspect.isTimeStamp()) {
                 /* Only plot continuous aspects */
@@ -136,18 +143,23 @@ public class LamiBarChartViewer extends LamiXYChartViewer {
 
             for (int i = 0; i < entries.size(); i++) {
                 Integer categoryIndex = checkNotNull(fEntryToCategoriesMap.get(checkNotNull(entries.get(i)))).fInternalValue;
-                Double yValue = yAxisAspect.resolveDouble(entries.get(i));
+
                 if (categoryIndex == null) {
                     /* Invalid value do not show */
                     continue;
                 }
 
-                if (yValue == null) {
+                Double yValue = Double.valueOf(ZERO);
+                @Nullable Number number = yAxisAspect.resolveNumber(entries.get(i));
+
+                if (number == null) {
                     /*
                      * Null value for y is the same as zero since this is a bar
                      * chart
                      */
                     yValue = Double.valueOf(ZERO);
+                } else {
+                    yValue = getInternalDoubleValue(number, fYInternalRange, fYExternalRange);
                 }
 
                 if (logscale && yValue <= ZERO) {
@@ -175,20 +187,23 @@ public class LamiBarChartViewer extends LamiXYChartViewer {
 
         /* Set the formatter on the Y axis */
         IAxisTick yTick = getChart().getAxisSet().getYAxis(0).getTick();
-        yTick.setFormat(getContinuousAxisFormatter(yAxisAspects, entries));
+        yTick.setFormat(getContinuousAxisFormatter(yAxisAspects, entries, fYInternalRange, fYExternalRange));
+
+        /*
+         * SWTCHART workaround: Swtchart fiddle with tick mark visibility
+         * based on the fact that it can parse the label to double or not.
+         * If the label happen to be a double it check for the presence of
+         * the value in it's own tick labels to value map for it presence.
+         * If it happen that the parsed value is not present in the map the
+         * tick get a visibility of false. The X axis does not have this
+         * problem since SWTCHART check on label angle and if !=0 simply do
+         * no logic regarding visibility. So simply set a label angle of 1
+         * to the axis.
+         */
+        yTick.setTickLabelAngle(1);
 
         /* Adjust the chart range */
         getChart().getAxisSet().adjustRange();
-
-        if (logscale) {
-            /*
-             * In case of a log Y axis, bump the X axis to hide the "fake" 0.9
-             * values.
-             */
-            Range yRange = getChart().getAxisSet().getYAxis(0).getRange();
-            getChart().getAxisSet().getYAxis(0).setRange(new Range(0.9,
-                    yRange.upper));
-        }
 
         /* Once the chart is filled, refresh the axis labels */
         refreshDisplayLabels();

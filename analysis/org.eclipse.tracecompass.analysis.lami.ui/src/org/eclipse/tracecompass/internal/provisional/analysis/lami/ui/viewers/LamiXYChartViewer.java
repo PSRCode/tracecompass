@@ -12,6 +12,7 @@ package org.eclipse.tracecompass.internal.provisional.analysis.lami.ui.viewers;
 import static org.eclipse.tracecompass.common.core.NonNullUtils.checkNotNull;
 import static org.eclipse.tracecompass.common.core.NonNullUtils.nullToEmptyString;
 
+import java.math.BigDecimal;
 import java.text.Format;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -43,7 +44,8 @@ import org.eclipse.tracecompass.internal.provisional.analysis.lami.core.aspect.L
 import org.eclipse.tracecompass.internal.provisional.analysis.lami.core.module.LamiChartModel;
 import org.eclipse.tracecompass.internal.provisional.analysis.lami.core.module.LamiResultTable;
 import org.eclipse.tracecompass.internal.provisional.analysis.lami.core.module.LamiTableEntry;
-import org.eclipse.tracecompass.internal.provisional.analysis.lami.core.module.LamiTimeStampFormat;
+import org.eclipse.tracecompass.internal.provisional.analysis.lami.ui.format.LamiDecimalUnitFormat;
+import org.eclipse.tracecompass.internal.provisional.analysis.lami.ui.format.LamiTimeStampFormat;
 import org.eclipse.tracecompass.internal.provisional.analysis.lami.ui.signals.LamiSelectionUpdateSignal;
 import org.eclipse.tracecompass.tmf.core.signal.TmfSignalHandler;
 import org.eclipse.tracecompass.tmf.ui.viewers.TmfViewer;
@@ -72,7 +74,7 @@ public abstract class LamiXYChartViewer extends TmfViewer implements ILamiViewer
     protected static final String UNKNOWN = "?"; //$NON-NLS-1$
 
     /** Zero value */
-    protected static final double ZERO = 0.0;
+    protected static final long ZERO = 0;
 
     /** Symbol for seconds (used in the custom ns -> s conversion) */
     private static final String SECONDS_SYMBOL = "s"; //$NON-NLS-1$
@@ -143,12 +145,12 @@ public abstract class LamiXYChartViewer extends TmfViewer implements ILamiViewer
     /**
      * Decimal formatter to display nanoseconds as seconds.
      */
-    protected static final DecimalUnitFormat NANO_TO_SECS_FORMATTER = new DecimalUnitFormat(0.000000001);
+    protected static final DecimalUnitFormat NANO_TO_SECS_FORMATTER = new LamiDecimalUnitFormat(0.000000001);
 
     /**
      * Default decimal formatter.
      */
-    protected static final DecimalUnitFormat DECIMAL_FORMATTER = new DecimalUnitFormat();
+    protected static final DecimalUnitFormat DECIMAL_FORMATTER = new LamiDecimalUnitFormat();
 
     private final Listener fResizeListener = event -> {
         /* Refresh the titles to fit the current chart size */
@@ -360,45 +362,61 @@ public abstract class LamiXYChartViewer extends TmfViewer implements ILamiViewer
      *            The list of aspects of the axis.
      * @param entries
      *            The list of entries of the chart.
+     * @param internalRange
+     *            The internal range for value transformation
+     * @param externalRange
+     *            The external range for value transformation
      * @return a formatter for the axis.
      */
-    protected static Format getContinuousAxisFormatter(List<LamiTableEntryAspect> axisAspects, List<LamiTableEntry> entries) {
+    protected static Format getContinuousAxisFormatter(List<LamiTableEntryAspect> axisAspects, List<LamiTableEntry> entries , @Nullable LamiGraphRange internalRange, @Nullable LamiGraphRange externalRange) {
+
+        Format formatter = DECIMAL_FORMATTER;
 
         if (areAspectsTimeStamp(axisAspects)) {
             /* Set a TimeStamp formatter depending on the duration between the first and last value */
-            double max = Double.MIN_VALUE;
-            double min = Double.MAX_VALUE;
+            BigDecimal max = new BigDecimal(Long.MIN_VALUE);
+            BigDecimal min = new BigDecimal(Long.MAX_VALUE);
 
             for (LamiTableEntry entry : entries) {
                 for (LamiTableEntryAspect aspect : axisAspects) {
-                    Double current = aspect.resolveDouble(entry);
-                    if (current != null) {
-                        max = Math.max(max, current);
-                        min = Math.min(min, current);
+                    @Nullable Number number = aspect.resolveNumber(entry);
+                    if (number != null) {
+                        BigDecimal current = new BigDecimal(number.toString());
+                            max = current.compareTo(max) == 1 ? current : max;
+                            min = current.compareTo(min) == -1 ? current : min;
                     }
                 }
             }
-            long duration = (long) max - (long) min;
 
+            long duration = max.subtract(min).longValue();
             if (duration > TimeUnit.DAYS.toNanos(1)) {
-                return DAYS_FORMATTER;
+                formatter = DAYS_FORMATTER;
             } else if (duration > TimeUnit.HOURS.toNanos(1)) {
-                return HOURS_FORMATTER;
+                formatter = HOURS_FORMATTER;
             } else if (duration > TimeUnit.MINUTES.toNanos(1)) {
-                return MINUTES_FORMATTER;
+                formatter = MINUTES_FORMATTER;
             } else if (duration > TimeUnit.SECONDS.toNanos(15)) {
-                return SECONDS_FORMATTER;
+                formatter = SECONDS_FORMATTER;
             } else {
-                return MILLISECONDS_FORMATTER;
+                formatter = MILLISECONDS_FORMATTER;
             }
+            ((LamiTimeStampFormat)formatter).setInternalRange(internalRange);
+            ((LamiTimeStampFormat)formatter).setExternalRange(externalRange);
+
         } else if (areAspectsTimeDuration(axisAspects)) {
             /* Set the time duration formatter */
-            return NANO_TO_SECS_FORMATTER;
+            formatter = NANO_TO_SECS_FORMATTER;
+            ((LamiDecimalUnitFormat)formatter).setInternalRange(internalRange);
+            ((LamiDecimalUnitFormat)formatter).setExternalRange(externalRange);
 
         } else {
-            /* For other numeric aspects, use the default decimal unit formatter */
-            return DECIMAL_FORMATTER;
+            /* For other numeric aspects, use the default lami decimal unit formatter */
+            formatter = DECIMAL_FORMATTER;
+            ((LamiDecimalUnitFormat)formatter).setInternalRange(internalRange);
+            ((LamiDecimalUnitFormat)formatter).setExternalRange(externalRange);
         }
+
+        return formatter;
     }
 
     /**
@@ -688,6 +706,77 @@ public abstract class LamiXYChartViewer extends TmfViewer implements ILamiViewer
         });
 
         return toolBar;
+    }
+
+    /**
+     * Get a {@link LamiGraphRange} that represents the passed aspects.
+     *
+     * @param aspects
+     *            The aspects that the range will represent
+     * @param clampToMinimalValue
+     *            Whether or not to start the range at the minimum value.
+     *            Default behavior is to set the minimal value to
+     *            the minimum value if less or equal to zero otherwise to Zero.
+     *
+     * @return the range of values for the passed list of aspects
+     */
+    protected LamiGraphRange getRange(List<LamiTableEntryAspect> aspects, boolean clampToMinimalValue) {
+        /* Find the minimal value */
+        BigDecimal min = new BigDecimal(Long.MAX_VALUE);
+        BigDecimal max = new BigDecimal(Long.MIN_VALUE);
+        for (LamiTableEntryAspect lamiTableEntryAspect : aspects) {
+            for (LamiTableEntry entry : getResultTable().getEntries()) {
+                @Nullable Number number = lamiTableEntryAspect.resolveNumber(entry);
+                if (number != null) {
+                    BigDecimal current = new BigDecimal(number.toString());
+                    min = current.min(min);
+                    max = current.max(max);
+                }
+            }
+        }
+
+        if (min.compareTo(BigDecimal.ZERO) == 1 && !clampToMinimalValue) {
+            min = BigDecimal.ZERO;
+        }
+
+        return new LamiGraphRange(checkNotNull(min), checkNotNull(max));
+    }
+
+
+    /**
+     * Transform external value into internal values Since SWTChart only support
+     * Double and Lami can pass Long values loss of precision might happen. To
+     * minimize this we transform the raw values to an internal representation
+     * based on a linear transformation.
+     *
+     * The internal value =
+     *
+     * ((rawValue - rawMinimum) * (internalRangeDelta/rawRangeDelta)) +
+     * internalMinimum
+     *
+     * @param number
+     *            The number to transform
+     * @param internalRange
+     *            The internal range definition to be used
+     * @param externalRange
+     *            The external range definition to be used
+     * @return the transformed value in Double comprised inside the internal
+     *         range
+     */
+    protected static double getInternalDoubleValue(Number number, LamiGraphRange internalRange, LamiGraphRange externalRange) {
+        BigDecimal value = new BigDecimal(number.toString());
+
+        if (externalRange.getRangeDelta().compareTo(BigDecimal.ZERO) == 0) {
+            return internalRange.getMinimum().doubleValue();
+        }
+
+        BigDecimal internalValue = value
+                .subtract(externalRange.getMinimum())
+                .multiply(internalRange.getRangeDelta())
+                .divide(externalRange.getRangeDelta(), 22, BigDecimal.ROUND_DOWN)
+                .add(internalRange.getMinimum());
+
+        return internalValue.doubleValue();
     }
 
     private final class ToolBarVisibilityToggleListener implements Listener {

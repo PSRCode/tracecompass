@@ -29,7 +29,7 @@ public class LamiIRQ extends LamiData {
     }
 
     private final Type fType;
-    private final int fNumber;
+    private final Long fNumber;
     private final @Nullable String fName;
 
     /**
@@ -44,7 +44,7 @@ public class LamiIRQ extends LamiData {
      */
     public LamiIRQ(Type irqType, int nb, @Nullable String name) {
         fType = irqType;
-        fNumber = nb;
+        fNumber = Long.valueOf(nb);
         fName = name;
     }
 
@@ -71,7 +71,7 @@ public class LamiIRQ extends LamiData {
      *
      * @return The IRQ number
      */
-    public int getNumber() {
+    public Long getNumber() {
         return fNumber;
     }
 

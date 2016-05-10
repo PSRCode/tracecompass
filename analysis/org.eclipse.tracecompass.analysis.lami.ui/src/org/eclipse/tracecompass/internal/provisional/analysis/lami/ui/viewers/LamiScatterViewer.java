@@ -11,6 +11,7 @@ package org.eclipse.tracecompass.internal.provisional.analysis.lami.ui.viewers;
 
 import static org.eclipse.tracecompass.common.core.NonNullUtils.checkNotNull;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -41,9 +42,9 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.tracecompass.internal.provisional.analysis.lami.core.aspect.LamiTableEntryAspect;
 import org.eclipse.tracecompass.internal.provisional.analysis.lami.core.module.LamiChartModel;
 import org.eclipse.tracecompass.internal.provisional.analysis.lami.core.module.LamiChartModel.ChartType;
-import org.eclipse.tracecompass.internal.provisional.analysis.lami.core.module.LamiLabelFormat;
 import org.eclipse.tracecompass.internal.provisional.analysis.lami.core.module.LamiResultTable;
 import org.eclipse.tracecompass.internal.provisional.analysis.lami.core.module.LamiTableEntry;
+import org.eclipse.tracecompass.internal.provisional.analysis.lami.ui.format.LamiLabelFormat;
 import org.eclipse.tracecompass.internal.provisional.analysis.lami.ui.signals.LamiSelectionUpdateSignal;
 import org.eclipse.tracecompass.tmf.core.signal.TmfSignalManager;
 import org.swtchart.IAxisTick;
@@ -64,6 +65,13 @@ import com.google.common.collect.Iterators;
 public class LamiScatterViewer extends LamiXYChartViewer {
 
     private Map<ISeries, List<Integer>> fIndexMapping;
+
+    /* Use a scale from 0 to 1 internally for both axes */
+    private LamiGraphRange fXInternalRange = new LamiGraphRange(checkNotNull(BigDecimal.ZERO), checkNotNull(BigDecimal.ONE));
+    private LamiGraphRange fYInternalRange = new LamiGraphRange(checkNotNull(BigDecimal.ZERO), checkNotNull(BigDecimal.ONE));
+
+    private @Nullable LamiGraphRange fXExternalRange = null;
+    private @Nullable LamiGraphRange fYExternalRange = null;
 
     /* The current data point for the hovering cross */
     private Point fHoveringCrossDataPoint;
@@ -121,6 +129,12 @@ public class LamiScatterViewer extends LamiXYChartViewer {
          */
         if (!areXAspectsContinuous) {
             generateLabelMap(xAxisAspects, checkNotNull(xMap));
+        } else {
+            /*
+             * Only clamp the range to minimal value if it is a timestamp since
+             * plotting from 1970 would make no sense.
+             */
+            fXExternalRange = getRange(xAxisAspects, areXAspectsTimeStamp);
         }
 
 
@@ -149,6 +163,12 @@ public class LamiScatterViewer extends LamiXYChartViewer {
          */
         if (!areYAspectsContinuous) {
             generateLabelMap(yAxisAspects, yMap);
+        } else {
+            /*
+             * Only clamp the range to minimal value if it is a timestamp since
+             * plotting from 1970 would make no sense.
+             */
+            fYExternalRange = getRange(yAxisAspects, areYAspectsTimeStamp);
         }
 
         /* Plot the series */
@@ -169,7 +189,18 @@ public class LamiScatterViewer extends LamiXYChartViewer {
             List<@Nullable Double> yDoubleSeries = new ArrayList<>();
 
             if (xAspect.isContinuous()) {
-                xDoubleSeries = getResultTable().getEntries().stream().map((entry -> xAspect.resolveDouble(entry))).collect(Collectors.toList());
+
+                List<@Nullable Number> numbers = getResultTable().getEntries()
+                        .stream().map((entry -> xAspect.resolveNumber(entry))).collect(Collectors.toList());
+
+                for (Number number : numbers) {
+                    if (number != null && fXExternalRange != null) {
+                        double internalValue = getInternalDoubleValue(number, fXInternalRange, fXExternalRange);
+                        xDoubleSeries.add(internalValue);
+                    } else {
+                        xDoubleSeries.add(null);
+                    }
+                }
             } else {
                 xDoubleSeries = getResultTable().getEntries().stream().map(entry -> {
                     String string = xAspect.resolveString(entry);
@@ -183,7 +214,15 @@ public class LamiScatterViewer extends LamiXYChartViewer {
             }
 
             if (yAspect.isContinuous()) {
-                yDoubleSeries = getResultTable().getEntries().stream().map((entry -> yAspect.resolveDouble(entry))).collect(Collectors.toList());
+                List<@Nullable Number> numbers = getResultTable().getEntries().stream().map((entry -> yAspect.resolveNumber(entry))).collect(Collectors.toList());
+                for (Number number : numbers) {
+                    if (number != null && fYExternalRange != null) {
+                        double internalValue = getInternalDoubleValue(number, fYInternalRange, fYExternalRange);
+                        yDoubleSeries.add(internalValue);
+                    } else {
+                        yDoubleSeries.add(null);
+                    }
+                }
             } else {
                 yDoubleSeries = getResultTable().getEntries().stream().map(entry -> {
                     String string = yAspect.resolveString(entry);
@@ -237,7 +276,7 @@ public class LamiScatterViewer extends LamiXYChartViewer {
         /* Modify x axis related chart styling */
         IAxisTick xTick = getChart().getAxisSet().getXAxis(0).getTick();
         if (areXAspectsContinuous) {
-            xTick.setFormat(getContinuousAxisFormatter(xAxisAspects, getResultTable().getEntries()));
+            xTick.setFormat(getContinuousAxisFormatter(xAxisAspects, getResultTable().getEntries(), fXInternalRange, fXExternalRange));
         } else {
             xTick.setFormat(new LamiLabelFormat(checkNotNull(xMap)));
             updateTickMark(checkNotNull(xMap), xTick, getChart().getPlotArea().getSize().x);
@@ -249,7 +288,8 @@ public class LamiScatterViewer extends LamiXYChartViewer {
         /* Modify Y axis related chart styling */
         IAxisTick yTick = getChart().getAxisSet().getYAxis(0).getTick();
         if (areYAspectsContinuous) {
-            yTick.setFormat(getContinuousAxisFormatter(yAxisAspects, getResultTable().getEntries()));
+            yTick.setFormat(getContinuousAxisFormatter(yAxisAspects, getResultTable().getEntries(), fYInternalRange, fYExternalRange));
+
         } else {
             yTick.setFormat(new LamiLabelFormat(checkNotNull(yMap)));
             updateTickMark(checkNotNull(yMap), yTick, getChart().getPlotArea().getSize().y);

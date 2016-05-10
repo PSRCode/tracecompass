@@ -63,7 +63,7 @@ public class LamiGenericAspect extends LamiTableEntryAspect {
     }
 
     @Override
-    public @Nullable Double resolveDouble(@NonNull LamiTableEntry entry) {
+    public @Nullable Number resolveNumber(@NonNull LamiTableEntry entry) {
         if (fIsContinuous) {
             try {
                 if (entry.getValue(fColIndex).toString() != null) {
@@ -80,13 +80,21 @@ public class LamiGenericAspect extends LamiTableEntryAspect {
     public Comparator<LamiTableEntry> getComparator() {
         if (isContinuous()) {
             return (o1, o2) -> {
-                Double dO1 = resolveDouble(o1);
-                Double dO2 = resolveDouble(o2);
+                Number dO1 = resolveNumber(o1);
+                Number dO2 = resolveNumber(o2);
                 if (dO1 == null || dO2 == null) {
                     return 0;
                 }
 
-                return dO1.compareTo(dO2);
+                if (!dO1.getClass().equals(dO2.getClass())) {
+                    return 0;
+                }
+
+                if ((dO1 instanceof Double && dO2 instanceof Double)) {
+                    return 0;
+                }
+
+                return ((Double)dO1).compareTo((Double)dO2);
             };
         }
 

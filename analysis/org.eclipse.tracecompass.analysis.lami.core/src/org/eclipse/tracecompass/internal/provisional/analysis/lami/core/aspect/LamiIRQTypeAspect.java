@@ -70,7 +70,7 @@ public class LamiIRQTypeAspect extends LamiTableEntryAspect {
     }
 
     @Override
-    public @Nullable Double resolveDouble(LamiTableEntry entry) {
+    public @Nullable Number resolveNumber(LamiTableEntry entry) {
         return null;
     }
 

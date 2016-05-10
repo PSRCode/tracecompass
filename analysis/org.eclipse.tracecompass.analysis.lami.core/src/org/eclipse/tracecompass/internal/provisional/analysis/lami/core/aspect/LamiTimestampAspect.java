@@ -61,11 +61,11 @@ public class LamiTimestampAspect extends LamiTableEntryAspect {
     }
 
     @Override
-    public @Nullable Double resolveDouble(@NonNull LamiTableEntry entry) {
+    public @Nullable Number resolveNumber(@NonNull LamiTableEntry entry) {
         LamiData data = entry.getValue(fColIndex);
         if (data instanceof LamiInteger) {
             LamiInteger range = (LamiInteger) data;
-            return Double.valueOf(range.getValue());
+            return Long.valueOf(range.getValue());
         }
         return null;
     }
@@ -73,13 +73,21 @@ public class LamiTimestampAspect extends LamiTableEntryAspect {
     @Override
     public Comparator<LamiTableEntry> getComparator() {
         return (o1, o2) -> {
-            Double dO1 = resolveDouble(o1);
-            Double dO2 = resolveDouble(o2);
+            Number dO1 = resolveNumber(o1);
+            Number dO2 = resolveNumber(o2);
             if (dO1 == null || dO2 == null) {
                 return 0;
             }
 
-            return dO1.compareTo(dO2);
+            if (!dO1.getClass().equals(dO2.getClass())) {
+                return 0;
+            }
+
+            if (!(dO1 instanceof Long && dO2 instanceof Long)) {
+                return 0;
+            }
+
+            return ((Long)dO1).compareTo((Long)dO2);
         };
     }
 
