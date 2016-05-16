@@ -71,8 +71,11 @@ class LamiAxisCheckBoxOption {
     public void setButtonEnabled(boolean enabled) {
         @Nullable Button button = fButton;
         if (button != null) {
-            button.setEnabled(enabled);
-            button.setSelection(fDefaultValue);
+            /* Only change state when necessary */
+            if (button.getEnabled() != enabled) {
+                button.setEnabled(enabled);
+                button.setSelection(fDefaultValue);
+            }
         }
     }
 
