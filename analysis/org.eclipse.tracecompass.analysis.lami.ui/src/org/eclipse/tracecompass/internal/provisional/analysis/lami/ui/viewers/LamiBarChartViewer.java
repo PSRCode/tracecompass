@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalDouble;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -55,6 +56,8 @@ import com.google.common.collect.Iterators;
  * @author Alexandre Montplaisir
  */
 public class LamiBarChartViewer extends LamiXYChartViewer {
+
+    private static final double LOGSCALE_EPSILON_FACTOR = 100.0;
 
     private class Mapping {
         final private @Nullable Integer fInternalValue;
@@ -121,8 +124,57 @@ public class LamiBarChartViewer extends LamiXYChartViewer {
             xCategories.add(string);
 
         }
-
         fCategories = xCategories.toArray(new String[0]);
+
+        /*
+         * Log scale magic course 101
+         *
+         * @author Jonathan Rajotte-Julien
+         *
+         * @author Mathieu Desnoyers
+         *
+         * Magic:
+         *
+         * It uses the relative difference divided by a factor
+         * (100) to get as close as it can to the actual minimum but still a
+         * little bit smaller. This is used as a workaround of SWTCHART
+         * limitations regarding custom scale drawing in log scale mode, bogus
+         * representation of NaN double values and limited support of multiple
+         * size series.
+         *
+         * This should be good enough for most users.
+         */
+        OptionalDouble min = OptionalDouble.empty();
+        OptionalDouble max = OptionalDouble.empty();
+        double logScaleEpsilon = 0.0;
+        if (logscale) {
+            /* Find minimal */
+            min = yAxisAspects.stream().flatMapToDouble(aspect ->
+                    entries.stream().mapToDouble(entry -> {
+                        Double value = aspect.resolveDouble(entry);
+                        if (value == null) {
+                            value = Double.valueOf(ZERO);
+                        }
+                        return value;
+                    }))
+                    .filter(x -> x > 0)
+                    .min();
+
+            /* Find maximum */
+            max = yAxisAspects.stream().flatMapToDouble(aspect ->
+                    entries.stream().mapToDouble(entry -> {
+                        Double value = aspect.resolveDouble(entry);
+                        if (value == null) {
+                            value = Double.valueOf(ZERO);
+                        }
+                        return value;
+                    }))
+                    .filter(x -> x > 0)
+                    .max();
+
+            double delta = max.getAsDouble() - min.getAsDouble();
+            logScaleEpsilon = min.getAsDouble() - ((min.getAsDouble() * delta) / (LOGSCALE_EPSILON_FACTOR * max.getAsDouble()));
+        }
 
         for (LamiTableEntryAspect yAxisAspect : yAxisAspects) {
             if (!yAxisAspect.isContinuous() || yAxisAspect.isTimeStamp()) {
@@ -151,8 +203,12 @@ public class LamiBarChartViewer extends LamiXYChartViewer {
                 }
 
                 if (logscale && yValue <= ZERO) {
-                    /* Less or equal to 0 values can't be plotted on a logscale */
-                    continue;
+                    /*
+                     * Less or equal to 0 values can't be plotted on a log
+                     * scale. We map them to the mean of the >=0 minimal value
+                     * and the calculated log scale magic epsilon.
+                     */
+                    yValue = (min.getAsDouble() + logScaleEpsilon) / 2.0;
                 }
 
                 validXValues.add(checkNotNull(categoryIndex).doubleValue());
@@ -181,18 +237,13 @@ public class LamiBarChartViewer extends LamiXYChartViewer {
         /* Set the formatter on the Y axis */
         IAxisTick yTick = getChart().getAxisSet().getYAxis(0).getTick();
         yTick.setFormat(getContinuousAxisFormatter(yAxisAspects, entries));
+        yTick.setTickLabelAngle(1);
 
         /* Adjust the chart range */
         getChart().getAxisSet().adjustRange();
-
         if (logscale) {
-            /*
-             * In case of a log Y axis, bump the X axis to hide the "fake" 0.9
-             * values.
-             */
-            Range yRange = getChart().getAxisSet().getYAxis(0).getRange();
-            getChart().getAxisSet().getYAxis(0).setRange(new Range(0.9,
-                    yRange.upper));
+            getChart().getAxisSet().getYAxis(0).setRange(new Range(logScaleEpsilon,
+                    max.getAsDouble()));
         }
 
         /* Once the chart is filled, refresh the axis labels */
