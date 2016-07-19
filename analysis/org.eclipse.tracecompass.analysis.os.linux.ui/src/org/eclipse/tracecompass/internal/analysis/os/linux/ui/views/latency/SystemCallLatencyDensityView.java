@@ -52,4 +52,10 @@ public class SystemCallLatencyDensityView extends AbstractSegmentStoreDensityVie
         return new SystemCallDensityViewer(parent);
     }
 
+    @Override
+    protected void actionsPin(boolean pinState) {
+        // TODO Auto-generated method stub
+
+    }
+
 }

@@ -188,4 +188,8 @@ public final class LamiReportView extends TmfView {
         return fTabPages.get(idx);
     }
 
+    @Override
+    protected void actionsPin(boolean pinState) {
+        // TODO
+    }
 }

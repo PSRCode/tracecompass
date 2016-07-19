@@ -16,6 +16,8 @@ package org.eclipse.tracecompass.tmf.ui.views;
 
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.widgets.Composite;
@@ -143,7 +145,23 @@ public abstract class TmfView extends ViewPart implements ITmfComponent {
             toolBarManager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
             toolBarManager.add(fPinAction);
         }
+
+        fPinAction.addPropertyChangeListener(new IPropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent event) {
+                if (IAction.CHECKED.equals(event.getProperty())) {
+                    actionsPin(!isPinned());
+                }
+            }
+        });
     }
+
+    /**
+     * @since 3.0
+     *
+     */
+    abstract protected void actionsPin(boolean pinState);
+
 
     @Override
     public void createPartControl(final Composite parent) {
@@ -164,6 +182,7 @@ public abstract class TmfView extends ViewPart implements ITmfComponent {
         IToolBarManager toolBarManager = getViewSite().getActionBars()
                 .getToolBarManager();
         toolBarManager.add(fCloneAction);
+        contributePinActionToToolBar();
 
         if (this instanceof ITmfTimeAligned) {
             contributeAlignViewsActionToToolbar();

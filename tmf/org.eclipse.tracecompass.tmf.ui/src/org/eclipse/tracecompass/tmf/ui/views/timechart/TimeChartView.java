@@ -814,4 +814,10 @@ public class TimeChartView extends TmfView implements ITimeGraphRangeListener, I
     public void performAlign(int offset, int width) {
         fViewer.performAlign(offset, width);
     }
+
+    @Override
+    protected void actionsPin(boolean pinState) {
+        // TODO Auto-generated method stub
+
+    }
 }

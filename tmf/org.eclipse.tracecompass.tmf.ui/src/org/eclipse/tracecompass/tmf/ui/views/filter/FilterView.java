@@ -318,4 +318,14 @@ public class FilterView extends TmfView {
         }
     }
 
+    @Override
+    protected void contributePinActionToToolBar() {
+        // Do not add the pin action
+    }
+
+    @Override
+    protected void actionsPin(boolean pinState) {
+        // Do nothing
+    }
+
 }

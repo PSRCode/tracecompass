@@ -580,4 +580,9 @@ public class XmlTimeGraphView extends AbstractTimeGraphView {
         return (trace != null) ? Collections.singleton(trace) : Collections.EMPTY_LIST;
     }
 
+    protected void actionsPin(boolean pinState) {
+        // TODO Auto-generated method stub
+
+    }
+
 }

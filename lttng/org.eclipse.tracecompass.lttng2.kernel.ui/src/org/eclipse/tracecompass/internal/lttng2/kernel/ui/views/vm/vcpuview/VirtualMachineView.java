@@ -475,4 +475,9 @@ public class VirtualMachineView extends AbstractTimeGraphView {
         return Collections.singleton(trace);
     }
 
+    @Override
+    protected void actionsPin(boolean pinState) {
+        // TODO Auto-generated method stub
+
+    }
 }

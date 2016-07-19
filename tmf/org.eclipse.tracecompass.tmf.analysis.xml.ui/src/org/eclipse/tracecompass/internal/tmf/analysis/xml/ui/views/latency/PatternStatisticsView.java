@@ -62,4 +62,9 @@ public class PatternStatisticsView extends AbstractSegmentStoreStatisticsView {
         loadStatisticView();
         return viewer;
     }
+
+    @Override
+    protected void actionsPin(boolean pinState) {
+        // TODO Auto-generated method stub
+    }
 }

@@ -214,4 +214,10 @@ public class TmfStatisticsViewImpl extends TmfView {
         // Makes the global viewer visible
         fStatsViewers.setSelection(0);
     }
+
+    @Override
+    protected void actionsPin(boolean pinState) {
+        // TODO Auto-generated method stub
+
+    }
 }

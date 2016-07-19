@@ -589,4 +589,14 @@ public class ColorsView extends TmfView {
         }
 
     }
+
+    @Override
+    protected void actionsPin(boolean pinState) {
+        // Do nothing on pin action
+    }
+
+    @Override
+    protected void contributePinActionToToolBar() {
+        // Do not show the pin action
+    }
 }

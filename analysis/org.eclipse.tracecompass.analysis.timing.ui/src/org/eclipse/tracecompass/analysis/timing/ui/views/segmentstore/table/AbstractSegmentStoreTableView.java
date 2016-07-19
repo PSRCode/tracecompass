@@ -103,4 +103,10 @@ public abstract class AbstractSegmentStoreTableView extends TmfView {
             fSegmentStoreViewer.setData(fSegmentStoreViewer.getSegmentProvider());
         }
     }
+
+    @Override
+    protected void actionsPin(boolean pinState) {
+        // TODO Auto-generated method stub
+
+    }
 }

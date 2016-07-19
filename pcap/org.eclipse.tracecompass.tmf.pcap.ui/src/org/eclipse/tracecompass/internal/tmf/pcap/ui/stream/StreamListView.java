@@ -509,4 +509,10 @@ public class StreamListView extends TmfView {
         }
     }
 
+    @Override
+    protected void actionsPin(boolean pinState) {
+        // TODO Auto-generated method stub
+
+    }
+
 }

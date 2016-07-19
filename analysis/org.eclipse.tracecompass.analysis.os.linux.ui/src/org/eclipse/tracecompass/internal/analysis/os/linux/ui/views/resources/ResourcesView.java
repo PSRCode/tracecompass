@@ -440,4 +440,10 @@ public class ResourcesView extends AbstractStateSystemTimeGraphView {
         ctx.setData(RESOURCES_FOLLOW_CPU, data);
     }
 
+    @Override
+    protected void actionsPin(boolean pinState) {
+        // TODO Auto-generated method stub
+
+    }
+
 }

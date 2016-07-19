@@ -92,4 +92,10 @@ public class PatternDensityView extends AbstractSegmentStoreDensityView {
         loadDensityViewer();
         return densityViewer;
     }
+
+    @Override
+    protected void actionsPin(boolean pinState) {
+        // TODO
+    }
+
 }

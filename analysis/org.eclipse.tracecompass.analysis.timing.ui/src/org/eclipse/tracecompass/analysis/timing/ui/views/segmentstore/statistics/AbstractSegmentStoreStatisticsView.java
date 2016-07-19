@@ -72,4 +72,10 @@ public abstract class AbstractSegmentStoreStatisticsView extends TmfView {
      */
     protected abstract AbstractSegmentStoreStatisticsViewer createSegmentStoreStatisticsViewer(Composite parent);
 
+    @Override
+    protected void actionsPin(boolean pinState) {
+        // TODO Auto-generated method stub
+
+    }
+
 }

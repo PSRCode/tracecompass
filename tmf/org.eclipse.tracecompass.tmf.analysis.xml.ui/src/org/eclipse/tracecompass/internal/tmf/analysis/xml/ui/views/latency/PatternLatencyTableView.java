@@ -64,4 +64,11 @@ public class PatternLatencyTableView extends AbstractSegmentStoreTableView {
         return viewer;
     }
 
+
+    @Override
+    protected void actionsPin(boolean pinState) {
+        // Do nothing
+    }
+
+
 }

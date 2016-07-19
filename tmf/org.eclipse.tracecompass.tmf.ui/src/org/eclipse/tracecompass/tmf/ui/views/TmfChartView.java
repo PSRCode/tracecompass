@@ -280,4 +280,9 @@ public abstract class TmfChartView extends TmfView implements ITmfTimeAligned {
         }
     }
 
+    @Override
+    protected void actionsPin(boolean pinState) {
+        // TODO
+    }
+
 }

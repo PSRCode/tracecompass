@@ -189,4 +189,8 @@ public class CpuUsageView extends TmfChartView {
         }
     }
 
+    @Override
+    protected void actionsPin(boolean pinState) {
+        // TODO
+    }
 }

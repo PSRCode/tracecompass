@@ -105,4 +105,10 @@ public class TmfStateSystemExplorer extends TmfView {
             fViewer.dispose();
         }
     }
+
+    @Override
+    protected void actionsPin(boolean pinState) {
+        // TODO Auto-generated method stub
+
+    }
 }

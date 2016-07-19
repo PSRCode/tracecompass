@@ -637,4 +637,8 @@ public class CriticalPathView extends AbstractTimeGraphView {
         setEndTime(end);
     }
 
+    @Override
+    protected void actionsPin(boolean pinState) {
+        // TODO
+    }
 }
