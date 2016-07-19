@@ -17,8 +17,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -41,6 +43,8 @@ public class TmfSignalManager {
     // the signal data type.
     private static Map<Object, Method[]> fListeners = new HashMap<>();
     private static Map<Object, Method[]> fVIPListeners = new HashMap<>();
+
+    private static Set<Object> fSourceBlacklist = new HashSet<>();
 
     // The signal executor for asynchronous signals
     private static final ExecutorService fExecutor = Executors.newSingleThreadExecutor();
@@ -74,6 +78,19 @@ public class TmfSignalManager {
     }
 
     /**
+     * Register an object to the signal manager source blacklist. Once this
+     * object is present in the blacklist all sent signals from it will be
+     * discarded.
+     *
+     * @param source
+     *            The object that is the source of signals
+     * @since 2.1
+     */
+    public static synchronized void registerSourceBlacklist(Object source) {
+        fSourceBlacklist.add(source);
+    }
+
+    /**
      * Register an object to the signal manager as a "VIP" listener. All VIP
      * listeners will all receive the signal before the manager moves on to the
      * lowly, non-VIP listeners.
@@ -99,6 +116,18 @@ public class TmfSignalManager {
     public static synchronized void deregister(Object listener) {
         fVIPListeners.remove(listener);
         fListeners.remove(listener);
+    }
+
+    /**
+     * De-register an object to the signal manager source blacklist. This means
+     * that all sent signal will be relayed.
+     *
+     * @param source
+     *            The object that is the source of signals
+     * @since 2.1
+     */
+    public static synchronized void deregisterSourceBlacklist(Object source) {
+        fSourceBlacklist.remove(source);
     }
 
     /**
@@ -137,6 +166,12 @@ public class TmfSignalManager {
      *            the signal to dispatch
      */
     public static synchronized void dispatchSignal(TmfSignal signal) {
+
+        // Check if the source is blacklisted
+        if(fSourceBlacklist.contains(signal.getSource())){
+            return;
+        }
+
         int signalId = fSignalId++;
         sendSignal(new TmfStartSynchSignal(signalId));
         signal.setReference(signalId);
@@ -184,8 +219,12 @@ public class TmfSignalManager {
             TmfCoreTracer.traceSignal(signal, "(start)"); //$NON-NLS-1$
         }
 
+
         // Build the list of listener methods that are registered for this signal
         Class<?> signalClass = signal.getClass();
+
+
+
         Map<Object, List<Method>> targets = new HashMap<>();
         targets.clear();
         for (Map.Entry<Object, Method[]> entry : listeners.entrySet()) {
