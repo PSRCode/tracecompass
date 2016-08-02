@@ -29,6 +29,7 @@ import org.eclipse.ui.IPartListener;
 import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.ViewPart;
 
 /**
@@ -52,6 +53,12 @@ public abstract class TmfView extends ViewPart implements ITmfComponent {
      */
     protected PinTmfViewAction fPinAction;
     private static TimeAlignViewsAction fAlignViewsAction;
+
+    /**
+     * Action class for cloning of tmfView.
+     * @since 2.1
+     */
+    protected CloneTmfViewAction fCloneAction;
 
     // ------------------------------------------------------------------------
     // Constructor
@@ -135,6 +142,23 @@ public abstract class TmfView extends ViewPart implements ITmfComponent {
     @Override
     public void createPartControl(final Composite parent) {
         fParentComposite = parent;
+
+        fCloneAction = new CloneTmfViewAction() {
+            @Override
+            public void run() {
+                try {
+                    TmfViewFactory.getInstance().clone(TmfView.this);
+                } catch (PartInitException e) {
+                    // TODO Inform the user of a problem
+                    e.printStackTrace();
+                }
+            }
+        };
+
+        IToolBarManager toolBarManager = getViewSite().getActionBars()
+                .getToolBarManager();
+        toolBarManager.add(fCloneAction);
+
         if (this instanceof ITmfTimeAligned) {
             contributeAlignViewsActionToToolbar();
 
