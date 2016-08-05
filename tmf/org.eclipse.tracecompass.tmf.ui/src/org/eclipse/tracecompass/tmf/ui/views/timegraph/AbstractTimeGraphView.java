@@ -1389,9 +1389,13 @@ public abstract class AbstractTimeGraphView extends TmfView implements ITmfTimeA
         makeActions();
         contributeToActionBars();
 
-        ITmfTrace trace = TmfTraceManager.getInstance().getActiveTrace();
-        if (trace != null) {
-            traceSelected(new TmfTraceSelectedSignal(this, trace));
+        if (isClone()) {
+            cloneView(fOrigin);
+        } else {
+            ITmfTrace trace = TmfTraceManager.getInstance().getActiveTrace();
+            if (trace != null) {
+                traceSelected(new TmfTraceSelectedSignal(this, trace));
+            }
         }
 
         // make selection available to other views
@@ -1633,6 +1637,46 @@ public abstract class AbstractTimeGraphView extends TmfView implements ITmfTimeA
                 refresh();
             }
         }
+    }
+
+    private void cloneView(TmfView view) {
+        if (!(view instanceof AbstractTimeGraphView)) {
+            return;
+        }
+
+        AbstractTimeGraphView aView = (AbstractTimeGraphView) view;
+
+        if (fZoomThread != null) {
+            fZoomThread.cancel();
+            fZoomThread = null;
+        }
+
+        /* Get trace info from origin view */
+        fTrace = aView.fTrace;
+
+        /* Get filter context info from origin view */
+
+        fEditorFile = TmfTraceManager.getInstance().getTraceEditorFile(fTrace);
+        synchronized (fEntryListMap) {
+            fEntryList = fEntryListMap.get(fTrace);
+            if (fEntryList == null) {
+                rebuild();
+            } else {
+                setStartTime(fTrace.getStartTime().toNanos());
+                setEndTime(fTrace.getEndTime().toNanos());
+                refresh();
+            }
+        }
+
+
+        /* Save the filters of the previous trace */
+        fFiltersMap.put(fTrace, aView.fTimeGraphWrapper.getFilters());
+        fViewContext.put(fTrace, new ViewContext(aView.fCurrentSortColumn, aView.fSortDirection, aView.fTimeGraphWrapper.getSelection()));
+
+        restoreViewContext();
+
+        refresh();
+
     }
 
     /**

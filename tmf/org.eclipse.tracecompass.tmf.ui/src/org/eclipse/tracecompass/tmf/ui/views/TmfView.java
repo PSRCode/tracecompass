@@ -60,6 +60,12 @@ public abstract class TmfView extends ViewPart implements ITmfComponent {
      */
     protected CloneTmfViewAction fCloneAction;
 
+    /**
+     * The original view.
+     * @since 2.1
+     */
+    protected TmfView fOrigin = null;
+
     // ------------------------------------------------------------------------
     // Constructor
     // ------------------------------------------------------------------------
@@ -202,6 +208,13 @@ public abstract class TmfView extends ViewPart implements ITmfComponent {
                 }
             });
         }
+    }
+
+    @Override
+    public void init(IViewSite site) throws PartInitException {
+        super.init(site);
+
+        fOrigin = TmfViewFactory.getInstance().getOrigin(this);
     }
 
     private void contributeAlignViewsActionToToolbar() {

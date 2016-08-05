@@ -331,4 +331,90 @@ public class TimeGraphEntry implements ITimeGraphEntry {
         return pattern.matcher(fName).find();
     }
 
+    /* (non-Javadoc)
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        //result = prime * result + ((fChildren == null) ? 0 : fChildren.hashCode());
+        //result = prime * result + ((fComparator == null) ? 0 : fComparator.hashCode());
+        result = prime * result + (int) (fEndTime ^ (fEndTime >>> 32));
+        //result = prime * result + ((fEventList == null) ? 0 : fEventList.hashCode());
+        result = prime * result + ((fName == null) ? 0 : fName.hashCode());
+        result = prime * result + ((fParent == null) ? 0 : fParent.hashCode());
+        result = prime * result + (int) (fStartTime ^ (fStartTime >>> 32));
+        //result = prime * result + ((fZoomedEventList == null) ? 0 : fZoomedEventList.hashCode());
+        return result;
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (!(obj instanceof TimeGraphEntry)) {
+            return false;
+        }
+        TimeGraphEntry other = (TimeGraphEntry) obj;
+//        if (fChildren == null) {
+//            if (other.fChildren != null) {
+//                return false;
+//            }
+//        } else if (!fChildren.equals(other.fChildren)) {
+//            return false;
+//        }
+//        if (fComparator == null) {
+//            if (other.fComparator != null) {
+//                return false;
+//            }
+//        } else if (!fComparator.equals(other.fComparator)) {
+//            return false;
+//        }
+        if (fEndTime != other.fEndTime) {
+            return false;
+        }
+//        if (fEventList == null) {
+//            if (other.fEventList != null) {
+//                return false;
+//            }
+//        } else if (!fEventList.equals(other.fEventList)) {
+//            return false;
+//        }
+        if (fName == null) {
+            if (other.fName != null) {
+                return false;
+            }
+        } else if (!fName.equals(other.fName)) {
+            return false;
+        }
+        if (fParent == null) {
+            if (other.fParent != null) {
+                return false;
+            }
+        } else if (!fParent.equals(other.fParent)) {
+            return false;
+        }
+        if (fStartTime != other.fStartTime) {
+            return false;
+        }
+//        if (fZoomedEventList == null) {
+//            if (other.fZoomedEventList != null) {
+//                return false;
+//            }
+//        } else if (!fZoomedEventList.equals(other.fZoomedEventList)) {
+//            return false;
+//        }
+        return true;
+    }
+
+
+
 }

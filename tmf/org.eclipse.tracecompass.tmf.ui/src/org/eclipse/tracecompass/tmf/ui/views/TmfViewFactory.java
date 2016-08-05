@@ -59,4 +59,21 @@ public class TmfViewFactory {
         IWorkbenchPage page = workbenchWindow.getActivePage();
         page.showView(primaryId, secondaryId, IWorkbenchPage.VIEW_VISIBLE);
     }
+
+    /**
+     * @param view
+     *          The potentially cloned view
+     * @return The original view
+     */
+    public @Nullable TmfView getOrigin(TmfView view) {
+        IViewSite viewSite = view.getViewSite();
+        if (viewSite == null) {
+            return null;
+        }
+
+        String primaryId = view.getViewSite().getId();
+        String secondaryId = view.getViewSite().getSecondaryId();
+
+        return clonedViewData.get( primaryId + '.' + secondaryId);
+    }
 }
