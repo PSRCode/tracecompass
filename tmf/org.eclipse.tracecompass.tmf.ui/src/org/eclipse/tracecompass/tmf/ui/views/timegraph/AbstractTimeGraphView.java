@@ -80,6 +80,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Slider;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.tracecompass.common.core.NonNullUtils;
@@ -1389,7 +1390,7 @@ public abstract class AbstractTimeGraphView extends TmfView implements ITmfTimeA
         makeActions();
         contributeToActionBars();
 
-        if (isClone()) {
+        if (fOrigin != null) {
             cloneView(fOrigin);
         } else {
             ITmfTrace trace = TmfTraceManager.getInstance().getActiveTrace();
@@ -1619,7 +1620,15 @@ public abstract class AbstractTimeGraphView extends TmfView implements ITmfTimeA
         if (fTrace != null) {
             /* save the filters of the previous trace */
             fFiltersMap.put(fTrace, fTimeGraphWrapper.getFilters());
-            fViewContext.put(fTrace, new ViewContext(fCurrentSortColumn, fSortDirection, fTimeGraphWrapper.getSelection()));
+            /* Calculate vertical position */
+
+            Slider vSlider = fTimeGraphWrapper.getTimeGraphViewer().getVerticalBar();
+            double verticalRatio  = -1;
+            if (vSlider != null) {
+                verticalRatio = vSlider.getSelection()/((double)(vSlider.getMaximum() - vSlider.getMinimum()));
+            }
+
+            fViewContext.put(fTrace, new ViewContext(fCurrentSortColumn, fSortDirection, fTimeGraphWrapper.getSelection(),verticalRatio));
         }
         fTrace = trace;
 
@@ -1654,8 +1663,10 @@ public abstract class AbstractTimeGraphView extends TmfView implements ITmfTimeA
         /* Get trace info from origin view */
         fTrace = aView.fTrace;
 
-        /* Get filter context info from origin view */
-
+        /*
+         * Since rebuild clear up all state simply wait after it to put previous
+         * filters and context
+         */
         fEditorFile = TmfTraceManager.getInstance().getTraceEditorFile(fTrace);
         synchronized (fEntryListMap) {
             fEntryList = fEntryListMap.get(fTrace);
@@ -1668,10 +1679,17 @@ public abstract class AbstractTimeGraphView extends TmfView implements ITmfTimeA
             }
         }
 
-
         /* Save the filters of the previous trace */
         fFiltersMap.put(fTrace, aView.fTimeGraphWrapper.getFilters());
-        fViewContext.put(fTrace, new ViewContext(aView.fCurrentSortColumn, aView.fSortDirection, aView.fTimeGraphWrapper.getSelection()));
+
+
+        Slider vSlider = aView.fTimeGraphWrapper.getTimeGraphViewer().getVerticalBar();
+        double verticalRatio  = -1;
+        if (vSlider != null) {
+            verticalRatio = vSlider.getSelection()/((double)(vSlider.getMaximum() - vSlider.getMinimum()));
+        }
+
+        fViewContext.put(fTrace, new ViewContext(aView.fCurrentSortColumn, aView.fSortDirection, aView.fTimeGraphWrapper.getSelection(), verticalRatio));
 
         restoreViewContext();
 
@@ -2309,6 +2327,13 @@ public abstract class AbstractTimeGraphView extends TmfView implements ITmfTimeA
         if ((viewContext != null) && (viewContext.getSelection() != null)) {
             fTimeGraphWrapper.setSelection(viewContext.getSelection());
         }
+
+        if ((viewContext != null) && (viewContext.getVerticalSliderPosition() != -1)) {
+            Slider vSlider = fTimeGraphWrapper.getTimeGraphViewer().getVerticalBar();
+            int position = (int) ((vSlider.getMaximum() - vSlider.getMinimum()) * viewContext.getVerticalSliderPosition());
+            fTimeGraphWrapper.getTimeGraphViewer().setTopIndex(position);
+        }
+
         fViewContext.remove(fTrace);
     }
 
@@ -2316,11 +2341,13 @@ public abstract class AbstractTimeGraphView extends TmfView implements ITmfTimeA
         private int fSortColumnIndex;
         private int fSortDirection;
         private @Nullable ITimeGraphEntry fSelection;
+        private double fVerticalSliderPosition;
 
-        ViewContext(int sortColunm, int sortDirection, ITimeGraphEntry selection) {
+        ViewContext(int sortColunm, int sortDirection, ITimeGraphEntry selection, double vSliderPercentPosition) {
             fSortColumnIndex = sortColunm;
             fSortDirection = sortDirection;
             fSelection = selection;
+            fVerticalSliderPosition = vSliderPercentPosition;
         }
         /**
          * @return the sortColumn
@@ -2339,6 +2366,10 @@ public abstract class AbstractTimeGraphView extends TmfView implements ITmfTimeA
          */
         public ITimeGraphEntry getSelection() {
             return fSelection;
+        }
+
+        public double getVerticalSliderPosition() {
+            return fVerticalSliderPosition;
         }
     }
 

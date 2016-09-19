@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import org.eclipse.ui.IViewPart;
+import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
@@ -57,7 +59,8 @@ public class TmfViewFactory {
         IWorkbench workbench = PlatformUI.getWorkbench();
         IWorkbenchWindow workbenchWindow = workbench.getActiveWorkbenchWindow();
         IWorkbenchPage page = workbenchWindow.getActivePage();
-        page.showView(primaryId, secondaryId, IWorkbenchPage.VIEW_VISIBLE);
+        IViewPart viewPart = page.showView(primaryId, secondaryId, IWorkbenchPage.VIEW_ACTIVATE);
+        page.activate(viewPart);
     }
 
     /**
@@ -65,7 +68,7 @@ public class TmfViewFactory {
      *          The potentially cloned view
      * @return The original view
      */
-    public @Nullable TmfView getOrigin(TmfView view) {
+    public TmfView getOrigin(TmfView view) {
         IViewSite viewSite = view.getViewSite();
         if (viewSite == null) {
             return null;
