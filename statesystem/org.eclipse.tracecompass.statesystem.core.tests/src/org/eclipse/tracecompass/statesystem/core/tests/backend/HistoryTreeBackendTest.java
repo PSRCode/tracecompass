@@ -101,7 +101,13 @@ public class HistoryTreeBackendTest extends StateHistoryBackendTestBase {
         if (!fReOpen) {
             return backend;
         }
+
         File historyTreeFile = fBackendMap.remove(backend);
+
+        if (historyTreeFile == null) {
+            return backend;
+        }
+
         backend.dispose();
         HistoryTreeBackend reOpenedBackend = new HistoryTreeBackend(SSID, historyTreeFile, PROVIDER_VERSION);
         fBackendMap.put(reOpenedBackend, historyTreeFile);
