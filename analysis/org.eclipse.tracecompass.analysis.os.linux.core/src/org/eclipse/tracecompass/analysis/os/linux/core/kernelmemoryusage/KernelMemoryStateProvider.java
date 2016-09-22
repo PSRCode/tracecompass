@@ -13,10 +13,8 @@ import static org.eclipse.tracecompass.common.core.NonNullUtils.checkNotNull;
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.tracecompass.analysis.os.linux.core.kernel.KernelTidAspect;
 import org.eclipse.tracecompass.analysis.os.linux.core.trace.IKernelAnalysisEventLayout;
-import org.eclipse.tracecompass.internal.analysis.os.linux.core.Activator;
 import org.eclipse.tracecompass.statesystem.core.ITmfStateSystemBuilder;
 import org.eclipse.tracecompass.statesystem.core.StateSystemBuilderUtils;
-import org.eclipse.tracecompass.statesystem.core.exceptions.AttributeNotFoundException;
 import org.eclipse.tracecompass.statesystem.core.statevalue.ITmfStateValue;
 import org.eclipse.tracecompass.statesystem.core.statevalue.TmfStateValue;
 import org.eclipse.tracecompass.tmf.core.event.ITmfEvent;
@@ -91,37 +89,33 @@ public class KernelMemoryStateProvider extends AbstractTmfStateProvider {
             return;
         }
 
-        try {
-            ITmfStateSystemBuilder ss = checkNotNull(getStateSystemBuilder());
-            long ts = event.getTimestamp().getValue();
+        ITmfStateSystemBuilder ss = checkNotNull(getStateSystemBuilder());
+        long ts = event.getTimestamp().getValue();
 
-            Integer tidField = KernelTidAspect.INSTANCE.resolve(event);
-            String tid;
-            if (tidField == null) {
-                // if the TID is not available
-                tid = OTHER_TID;
-            } else {
-                tid = tidField.toString();
-            }
+        Integer tidField = KernelTidAspect.INSTANCE.resolve(event);
+        String tid;
+        if (tidField == null) {
+            // if the TID is not available
+            tid = OTHER_TID;
+        } else {
+            tid = tidField.toString();
+        }
 
-            int tidQuark = ss.getQuarkAbsoluteAndAdd(tid);
-            StateSystemBuilderUtils.incrementAttributeLong(ss, ts, tidQuark, inc);
-            long currentMemoryValue = ss.queryOngoingState(tidQuark).unboxLong();
+        int tidQuark = ss.getQuarkAbsoluteAndAdd(tid);
+        StateSystemBuilderUtils.incrementAttributeLong(ss, ts, tidQuark, inc);
+        long currentMemoryValue = ss.queryOngoingState(tidQuark).unboxLong();
 
-            /**
-             * We add an attribute to keep the lowest memory value for each
-             * thread. This quantity is used when we plot to avoid negative
-             * values.
-             */
-            int lowestMemoryQuark = ss.getQuarkRelativeAndAdd(tidQuark, KernelMemoryAnalysisModule.THREAD_LOWEST_MEMORY_VALUE);
-            ITmfStateValue lowestMemoryValue = ss.queryOngoingState(lowestMemoryQuark);
-            long previousLowest = lowestMemoryValue.isNull() ? 0 : lowestMemoryValue.unboxLong();
+        /**
+         * We add an attribute to keep the lowest memory value for each
+         * thread. This quantity is used when we plot to avoid negative
+         * values.
+         */
+        int lowestMemoryQuark = ss.getQuarkRelativeAndAdd(tidQuark, KernelMemoryAnalysisModule.THREAD_LOWEST_MEMORY_VALUE);
+        ITmfStateValue lowestMemoryValue = ss.queryOngoingState(lowestMemoryQuark);
+        long previousLowest = lowestMemoryValue.isNull() ? 0 : lowestMemoryValue.unboxLong();
 
-            if (previousLowest > currentMemoryValue) {
-                ss.modifyAttribute(ts, TmfStateValue.newValueLong(currentMemoryValue), lowestMemoryQuark);
-            }
-        } catch (AttributeNotFoundException e) {
-            Activator.getDefault().logError(e.getMessage(), e);
+        if (previousLowest > currentMemoryValue) {
+            ss.modifyAttribute(ts, TmfStateValue.newValueLong(currentMemoryValue), lowestMemoryQuark);
         }
     }
 

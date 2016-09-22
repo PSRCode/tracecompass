@@ -790,8 +790,6 @@ public class CallStackView extends AbstractTimeGraphView {
                 }
                 lastEndTime = time + duration;
             }
-        } catch (AttributeNotFoundException e) {
-            Activator.getDefault().logError("Error querying state system", e); //$NON-NLS-1$
         } catch (TimeRangeException e) {
             Activator.getDefault().logError("Error querying state system", e); //$NON-NLS-1$
         } catch (StateSystemDisposedException e) {

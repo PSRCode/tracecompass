@@ -47,7 +47,6 @@ import org.eclipse.tracecompass.internal.tmf.analysis.xml.ui.views.XmlViewInfo;
 import org.eclipse.tracecompass.internal.tmf.analysis.xml.ui.views.timegraph.XmlEntry.EntryDisplayType;
 import org.eclipse.tracecompass.statesystem.core.ITmfStateSystem;
 import org.eclipse.tracecompass.statesystem.core.StateSystemUtils;
-import org.eclipse.tracecompass.statesystem.core.exceptions.AttributeNotFoundException;
 import org.eclipse.tracecompass.statesystem.core.exceptions.StateSystemDisposedException;
 import org.eclipse.tracecompass.statesystem.core.exceptions.StateValueTypeException;
 import org.eclipse.tracecompass.statesystem.core.exceptions.TimeRangeException;
@@ -523,7 +522,7 @@ public class XmlTimeGraphView extends AbstractTimeGraphView {
                     lastEndTime = time + duration;
                 }
             }
-        } catch (AttributeNotFoundException | TimeRangeException | StateValueTypeException | StateSystemDisposedException e) {
+        } catch (TimeRangeException | StateValueTypeException | StateSystemDisposedException e) {
             /* Ignored */
         }
         return eventList;
