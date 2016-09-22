@@ -21,7 +21,6 @@ import org.eclipse.tracecompass.internal.analysis.os.linux.core.Activator;
 import org.eclipse.tracecompass.statesystem.core.ITmfStateSystem;
 import org.eclipse.tracecompass.statesystem.core.ITmfStateSystemBuilder;
 import org.eclipse.tracecompass.statesystem.core.StateSystemBuilderUtils;
-import org.eclipse.tracecompass.statesystem.core.exceptions.AttributeNotFoundException;
 import org.eclipse.tracecompass.statesystem.core.exceptions.StateValueTypeException;
 import org.eclipse.tracecompass.statesystem.core.statevalue.ITmfStateValue;
 import org.eclipse.tracecompass.statesystem.core.statevalue.TmfStateValue;
@@ -309,7 +308,7 @@ public class DiskWriteModel extends Disk {
             default:
                 throw new IllegalStateException("Complete request: the request cannot be other than READ or WRITE:" + request.getType()); //$NON-NLS-1$
             }
-        } catch (StateValueTypeException | AttributeNotFoundException e) {
+        } catch (StateValueTypeException e) {
             Activator.getDefault().logError("Error completing request", e); //$NON-NLS-1$
         }
 

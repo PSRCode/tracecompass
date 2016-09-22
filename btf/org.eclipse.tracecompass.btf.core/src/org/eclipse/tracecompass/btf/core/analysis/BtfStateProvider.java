@@ -145,122 +145,117 @@ public class BtfStateProvider extends AbstractTmfStateProvider {
         final String target = event.getTarget();
         String task;
         int quark;
-        try {
-            switch (eventType) {
+        switch (eventType) {
 
-            case "activate": //$NON-NLS-1$
-                updateTaskStateSystem(ssb, ts, event, STATE_TASK_ACTIVE);
-                break;
+        case "activate": //$NON-NLS-1$
+            updateTaskStateSystem(ssb, ts, event, STATE_TASK_ACTIVE);
+            break;
 
-            case "start": //$NON-NLS-1$
-            case "resume": //$NON-NLS-1$
-                updateTaskStateSystem(ssb, ts, event, STATE_TASK_RUNNING);
+        case "start": //$NON-NLS-1$
+        case "resume": //$NON-NLS-1$
+            updateTaskStateSystem(ssb, ts, event, STATE_TASK_RUNNING);
 
-                if (source.startsWith(ENTITY_CORE)) {
-                    String core = source;
-                    task = target;
+            if (source.startsWith(ENTITY_CORE)) {
+                String core = source;
+                task = target;
 
-                    quark = ssb.getQuarkAbsoluteAndAdd(ATTRIBUTE_TASKS, task, core);
-                    ssb.modifyAttribute(ts, STATE_RUNNING.getValue(), quark);
+                quark = ssb.getQuarkAbsoluteAndAdd(ATTRIBUTE_TASKS, task, core);
+                ssb.modifyAttribute(ts, STATE_RUNNING.getValue(), quark);
 
-                    /* Mark this task as active in the ActiveCore attribute */
-                    quark = ssb.getQuarkAbsoluteAndAdd(ATTRIBUTE_TASKS, task, ATTRIBUTE_ACTIVE_CORE);
-                    ITmfStateValue value = TmfStateValue.newValueString(core);
-                    ssb.modifyAttribute(ts, value, quark);
+                /* Mark this task as active in the ActiveCore attribute */
+                quark = ssb.getQuarkAbsoluteAndAdd(ATTRIBUTE_TASKS, task, ATTRIBUTE_ACTIVE_CORE);
+                ITmfStateValue value = TmfStateValue.newValueString(core);
+                ssb.modifyAttribute(ts, value, quark);
 
-                    /* Mark this task as active in the Cores/* attribute */
-                    quark = ssb.getQuarkAbsoluteAndAdd(ATTRIBUTE_CORES, core);
-                    /* Until the view can display the string */
-                    value = STATE_RUNNING.getValue();
-                    ssb.modifyAttribute(ts, value, quark);
+                /* Mark this task as active in the Cores/* attribute */
+                quark = ssb.getQuarkAbsoluteAndAdd(ATTRIBUTE_CORES, core);
+                /* Until the view can display the string */
+                value = STATE_RUNNING.getValue();
+                ssb.modifyAttribute(ts, value, quark);
 
-                } else if (source.startsWith(ENTITY_TASK)) {
-                    task = source;
-                    String runnable = target;
-                    String core = getCoreOfTask(ssb, task);
+            } else if (source.startsWith(ENTITY_TASK)) {
+                task = source;
+                String runnable = target;
+                String core = getCoreOfTask(ssb, task);
 
-                    quark = ssb.getQuarkAbsoluteAndAdd(ATTRIBUTE_TASKS, task, core, runnable);
-                    ssb.modifyAttribute(ts, STATE_RUNNING.getValue(), quark);
-                }
-                break;
-
-            case "suspend": //$NON-NLS-1$
-                /* "suspend" events only happen on Tasks */
-                if (source.startsWith(ENTITY_TASK)) {
-                    task = source;
-                    String runnable = target;
-                    String core = getCoreOfTask(ssb, task);
-
-                    /* We'll update both the Core and Runnable attributes */
-                    quark = ssb.getQuarkAbsoluteAndAdd(ATTRIBUTE_TASKS, task, core);
-                    ssb.modifyAttribute(ts, STATE_SUSPENDED.getValue(), quark);
-                    quark = ssb.getQuarkRelativeAndAdd(quark, runnable);
-                    ssb.modifyAttribute(ts, STATE_SUSPENDED.getValue(), quark);
-                }
-                break;
-
-            case "terminate": //$NON-NLS-1$
-                updateTaskStateSystem(ssb, ts, event, STATE_TASK_TERMINATED);
-
-                if (source.startsWith(ENTITY_CORE)) {
-                    String core = source;
-                    task = target;
-
-                    quark = ssb.getQuarkAbsoluteAndAdd(ATTRIBUTE_TASKS, task, core);
-                    ssb.modifyAttribute(ts, STATE_NOT_RUNNING.getValue(), quark);
-
-                    /* Remove our "active task on core" bookmark */
-                    quark = ssb.getQuarkAbsoluteAndAdd(ATTRIBUTE_TASKS, task, ATTRIBUTE_ACTIVE_CORE);
-                    ITmfStateValue value = TmfStateValue.nullValue();
-                    ssb.modifyAttribute(ts, value, quark);
-
-                    /* Mark the Cores/* attribute as not running */
-                    quark = ssb.getQuarkAbsoluteAndAdd(ATTRIBUTE_CORES, core);
-                    ssb.modifyAttribute(ts, STATE_CORE_IDLE.getValue(), quark);
-
-                } else if (source.startsWith(ENTITY_TASK)) {
-                    task = source;
-                    String runnable = target;
-                    String core = getCoreOfTask(ssb, task);
-
-                    quark = ssb.getQuarkAbsoluteAndAdd(ATTRIBUTE_TASKS, task, core, runnable);
-                    ssb.modifyAttribute(ts, STATE_NOT_RUNNING.getValue(), quark);
-                }
-                break;
-
-            case "preempt": //$NON-NLS-1$
-            case "release": //$NON-NLS-1$
-            case "release_parking": //$NON-NLS-1$
-                updateTaskStateSystem(ssb, ts, event, STATE_TASK_READY);
-                break;
-            case "wait": //$NON-NLS-1$
-                updateTaskStateSystem(ssb, ts, event, STATE_TASK_WAITING);
-                break;
-            case "park": //$NON-NLS-1$
-                updateTaskStateSystem(ssb, ts, event, STATE_TASK_PARKING);
-                break;
-            case "poll": //$NON-NLS-1$
-                //$FALL-THROUGH$
-            case "poll_parking": //$NON-NLS-1$
-                updateTaskStateSystem(ssb, ts, event, STATE_TASK_POLLING);
-                break;
-            case "run": //$NON-NLS-1$
-                updateTaskStateSystem(ssb, ts, event, STATE_TASK_RUNNING);
-                break;
-            default:
-                break;
-
+                quark = ssb.getQuarkAbsoluteAndAdd(ATTRIBUTE_TASKS, task, core, runnable);
+                ssb.modifyAttribute(ts, STATE_RUNNING.getValue(), quark);
             }
-        } catch (AttributeNotFoundException e) {
-            throw new IllegalStateException(e);
+            break;
+
+        case "suspend": //$NON-NLS-1$
+            /* "suspend" events only happen on Tasks */
+            if (source.startsWith(ENTITY_TASK)) {
+                task = source;
+                String runnable = target;
+                String core = getCoreOfTask(ssb, task);
+
+                /* We'll update both the Core and Runnable attributes */
+                quark = ssb.getQuarkAbsoluteAndAdd(ATTRIBUTE_TASKS, task, core);
+                ssb.modifyAttribute(ts, STATE_SUSPENDED.getValue(), quark);
+                quark = ssb.getQuarkRelativeAndAdd(quark, runnable);
+                ssb.modifyAttribute(ts, STATE_SUSPENDED.getValue(), quark);
+            }
+            break;
+
+        case "terminate": //$NON-NLS-1$
+            updateTaskStateSystem(ssb, ts, event, STATE_TASK_TERMINATED);
+
+            if (source.startsWith(ENTITY_CORE)) {
+                String core = source;
+                task = target;
+
+                quark = ssb.getQuarkAbsoluteAndAdd(ATTRIBUTE_TASKS, task, core);
+                ssb.modifyAttribute(ts, STATE_NOT_RUNNING.getValue(), quark);
+
+                /* Remove our "active task on core" bookmark */
+                quark = ssb.getQuarkAbsoluteAndAdd(ATTRIBUTE_TASKS, task, ATTRIBUTE_ACTIVE_CORE);
+                ITmfStateValue value = TmfStateValue.nullValue();
+                ssb.modifyAttribute(ts, value, quark);
+
+                /* Mark the Cores/* attribute as not running */
+                quark = ssb.getQuarkAbsoluteAndAdd(ATTRIBUTE_CORES, core);
+                ssb.modifyAttribute(ts, STATE_CORE_IDLE.getValue(), quark);
+
+            } else if (source.startsWith(ENTITY_TASK)) {
+                task = source;
+                String runnable = target;
+                String core = getCoreOfTask(ssb, task);
+
+                quark = ssb.getQuarkAbsoluteAndAdd(ATTRIBUTE_TASKS, task, core, runnable);
+                ssb.modifyAttribute(ts, STATE_NOT_RUNNING.getValue(), quark);
+            }
+            break;
+
+        case "preempt": //$NON-NLS-1$
+        case "release": //$NON-NLS-1$
+        case "release_parking": //$NON-NLS-1$
+            updateTaskStateSystem(ssb, ts, event, STATE_TASK_READY);
+            break;
+        case "wait": //$NON-NLS-1$
+            updateTaskStateSystem(ssb, ts, event, STATE_TASK_WAITING);
+            break;
+        case "park": //$NON-NLS-1$
+            updateTaskStateSystem(ssb, ts, event, STATE_TASK_PARKING);
+            break;
+        case "poll": //$NON-NLS-1$
+            //$FALL-THROUGH$
+        case "poll_parking": //$NON-NLS-1$
+            updateTaskStateSystem(ssb, ts, event, STATE_TASK_POLLING);
+            break;
+        case "run": //$NON-NLS-1$
+            updateTaskStateSystem(ssb, ts, event, STATE_TASK_RUNNING);
+            break;
+        default:
+            break;
+
         }
     }
 
     private static void updateTaskStateSystem(
             final ITmfStateSystemBuilder ssb,
             final long ts, BtfEvent event,
-            TmfNamedStateValue stateValue)
-            throws AttributeNotFoundException {
+            TmfNamedStateValue stateValue) {
         String name = event.getName();
         if (name.equals("Task")) { //$NON-NLS-1$
             String task = event.getTarget();

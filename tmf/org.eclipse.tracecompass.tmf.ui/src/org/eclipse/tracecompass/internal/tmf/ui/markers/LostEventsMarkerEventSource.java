@@ -108,7 +108,7 @@ public class LostEventsMarkerEventSource implements IMarkerEventSource {
                     markers.add(marker);
                 }
             }
-        } catch (AttributeNotFoundException | StateSystemDisposedException e) {
+        } catch (StateSystemDisposedException e) {
             /* ignored */
         }
         fLastRequest = request;

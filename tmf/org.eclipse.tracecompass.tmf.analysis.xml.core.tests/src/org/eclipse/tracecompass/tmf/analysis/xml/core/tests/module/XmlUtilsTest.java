@@ -304,13 +304,11 @@ public class XmlUtilsTest {
      *            this quark
      * @param expectedValues
      *            The expected content values for this quark
-     * @throws AttributeNotFoundException
-     *             If the quark we want to query is invalid
      * @throws StateSystemDisposedException
      *             If the state system has been disposed before the end of the
      *             queries
      */
-    public static void verifyStateIntervals(String testId, @NonNull ITmfStateSystem ss, Integer quark, int[] expectedStarts, ITmfStateValue[] expectedValues) throws AttributeNotFoundException, StateSystemDisposedException {
+    public static void verifyStateIntervals(String testId, @NonNull ITmfStateSystem ss, Integer quark, int[] expectedStarts, ITmfStateValue[] expectedValues) throws StateSystemDisposedException {
         int expectedCount = expectedStarts.length - 1;
         List<ITmfStateInterval> intervals = StateSystemUtils.queryHistoryRange(ss, quark, expectedStarts[0], expectedStarts[expectedCount]);
         assertEquals(testId + ": Interval count", expectedCount, intervals.size());

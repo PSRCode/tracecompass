@@ -31,7 +31,6 @@ import org.eclipse.tracecompass.statesystem.core.StateSystemFactory;
 import org.eclipse.tracecompass.statesystem.core.StateSystemUtils;
 import org.eclipse.tracecompass.statesystem.core.backend.IStateHistoryBackend;
 import org.eclipse.tracecompass.statesystem.core.backend.StateHistoryBackendFactory;
-import org.eclipse.tracecompass.statesystem.core.exceptions.AttributeNotFoundException;
 import org.eclipse.tracecompass.statesystem.core.exceptions.StateSystemDisposedException;
 import org.eclipse.tracecompass.statesystem.core.exceptions.StateValueTypeException;
 import org.eclipse.tracecompass.statesystem.core.statevalue.ITmfStateValue;
@@ -343,7 +342,7 @@ public class HistoryTreeBackendBenchmark {
                     }
                 }
                 deleteFile();
-            } catch (IOException | StateValueTypeException | AttributeNotFoundException | StateSystemDisposedException e) {
+            } catch (IOException | StateValueTypeException | StateSystemDisposedException e) {
                 fail(e.getMessage());
             } finally {
                 deleteFile();

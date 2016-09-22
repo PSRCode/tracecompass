@@ -20,7 +20,6 @@ import java.util.List;
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.tracecompass.internal.tmf.analysis.xml.core.stateprovider.XmlStateSystemModule;
 import org.eclipse.tracecompass.statesystem.core.ITmfStateSystem;
-import org.eclipse.tracecompass.statesystem.core.exceptions.AttributeNotFoundException;
 import org.eclipse.tracecompass.statesystem.core.exceptions.StateSystemDisposedException;
 import org.eclipse.tracecompass.statesystem.core.statevalue.ITmfStateValue;
 import org.eclipse.tracecompass.statesystem.core.statevalue.TmfStateValue;
@@ -95,7 +94,7 @@ public class TmfXmlConditionTest {
                     break;
                 }
             }
-        } catch (TmfAnalysisException | AttributeNotFoundException | StateSystemDisposedException e) {
+        } catch (TmfAnalysisException | StateSystemDisposedException e) {
             fail(e.getMessage());
         } finally {
             module.dispose();
