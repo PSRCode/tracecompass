@@ -480,24 +480,27 @@ public class CTFTraceReader implements AutoCloseable {
         }
 
         for (int j = 0; j < fEventCountPerTraceFile.length; j++) {
-            CTFStreamInputReader se = fStreamInputReaders.get(j);
+            try (CTFStreamInputReader se = fStreamInputReaders.get(j)) {
 
-            long len = (width * fEventCountPerTraceFile[se.getName()])
-                    / numEvents;
+                long len = (width * fEventCountPerTraceFile[se.getName()])
+                        / numEvents;
 
-            StringBuilder sb = new StringBuilder(se.getFilename());
-            sb.append("\t["); //$NON-NLS-1$
+                StringBuilder sb = new StringBuilder(se.getFilename());
+                sb.append("\t["); //$NON-NLS-1$
 
-            for (int i = 0; i < len; i++) {
-                sb.append('+');
+                for (int i = 0; i < len; i++) {
+                    sb.append('+');
+                }
+
+                for (long i = len; i < width; i++) {
+                    sb.append(' ');
+                }
+
+                sb.append("]\t" + fEventCountPerTraceFile[se.getName()] + " Events"); //$NON-NLS-1$//$NON-NLS-2$
+                Activator.log(sb.toString());
+            } catch (IOException e) {
+                Activator.logError(e.getMessage(), e);
             }
-
-            for (long i = len; i < width; i++) {
-                sb.append(' ');
-            }
-
-            sb.append("]\t" + fEventCountPerTraceFile[se.getName()] + " Events"); //$NON-NLS-1$//$NON-NLS-2$
-            Activator.log(sb.toString());
         }
     }
 
