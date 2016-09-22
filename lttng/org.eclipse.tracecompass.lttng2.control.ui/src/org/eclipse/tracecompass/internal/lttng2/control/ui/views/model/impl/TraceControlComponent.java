@@ -62,7 +62,7 @@ public class TraceControlComponent implements ITraceControlComponent {
     /**
      * The list of listeners to be notified about changes.
      */
-    private final ListenerList fListeners = new ListenerList();
+    private final ListenerList<ITraceControlComponentChangedListener> fListeners = new ListenerList<>();
 
     // ------------------------------------------------------------------------
     // Constructors

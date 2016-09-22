@@ -81,7 +81,7 @@ public class TmfPieChartViewer extends Composite {
     /**
      * The list of listener to notify when an event type is selected
      */
-    private ListenerList fEventTypeSelectedListeners = new ListenerList(ListenerList.IDENTITY);
+    private ListenerList<Listener> fEventTypeSelectedListeners = new ListenerList<>(ListenerList.IDENTITY);
 
     /**
      * The name of the slice containing the too little slices

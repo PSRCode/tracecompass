@@ -44,7 +44,7 @@ import org.eclipse.tracecompass.tmf.core.trace.TmfTraceManager;
  */
 public abstract class AbstractSegmentStoreAnalysisModule extends TmfAbstractAnalysisModule implements ISegmentStoreProvider {
 
-    private final ListenerList fListeners = new ListenerList(ListenerList.IDENTITY);
+    private final ListenerList<IAnalysisProgressListener> fListeners = new ListenerList<>(ListenerList.IDENTITY);
 
     private @Nullable ISegmentStore<ISegment> fSegmentStore;
 

@@ -75,7 +75,7 @@ public abstract class CallGraphAnalysis extends TmfAbstractAnalysisModule implem
     /**
      * Listeners
      */
-    private final ListenerList fListeners = new ListenerList(ListenerList.IDENTITY);
+    private final ListenerList<Object> fListeners = new ListenerList<>(ListenerList.IDENTITY);
 
     /**
      * The Trace's root functions list

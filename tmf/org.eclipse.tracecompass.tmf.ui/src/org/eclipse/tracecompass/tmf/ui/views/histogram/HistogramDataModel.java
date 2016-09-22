@@ -113,7 +113,7 @@ public class HistogramDataModel implements IHistogramDataModel {
     private long fTimeLimit;
 
     // Private listener lists
-    private final ListenerList fModelListeners;
+    private final ListenerList<Object> fModelListeners;
 
     // ------------------------------------------------------------------------
     // Constructors
@@ -159,7 +159,7 @@ public class HistogramDataModel implements IHistogramDataModel {
         fNbBuckets = nbBuckets;
         fBuckets = new HistogramBucket[nbBuckets];
         fLostEventsBuckets = new long[nbBuckets];
-        fModelListeners = new ListenerList();
+        fModelListeners = new ListenerList<>();
         clear();
     }
 
@@ -185,7 +185,7 @@ public class HistogramDataModel implements IHistogramDataModel {
         fSelectionBegin = other.fSelectionBegin;
         fSelectionEnd = other.fSelectionEnd;
         fTimeLimit = other.fTimeLimit;
-        fModelListeners = new ListenerList();
+        fModelListeners = new ListenerList<>();
         Object[] listeners = other.fModelListeners.getListeners();
         for (Object listener : listeners) {
             fModelListeners.add(listener);
