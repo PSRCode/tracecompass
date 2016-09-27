@@ -63,6 +63,7 @@ import org.eclipse.tracecompass.statesystem.core.interval.ITmfStateInterval;
 import org.eclipse.tracecompass.statesystem.core.statevalue.ITmfStateValue;
 import org.eclipse.tracecompass.tmf.core.event.ITmfEvent;
 import org.eclipse.tracecompass.tmf.core.signal.TmfSelectionRangeUpdatedSignal;
+import org.eclipse.tracecompass.tmf.core.signal.TmfSignal;
 import org.eclipse.tracecompass.tmf.core.signal.TmfSignalHandler;
 import org.eclipse.tracecompass.tmf.core.signal.TmfSignalManager;
 import org.eclipse.tracecompass.tmf.core.signal.TmfTraceSelectedSignal;
@@ -1059,6 +1060,21 @@ public class ControlFlowView extends AbstractStateSystemTimeGraphView {
 
     @Override
     protected void actionsPin(boolean pinState) {
-        // TODO IMPLEMENT
+        if (pinState) {
+            TmfSignalManager.addIgnoredInboundSignal(this, TmfSignal.class);
+            TmfSignalManager.addIgnoredOutboundSignal(this, TmfSignal.class);
+        } else {
+            TmfSignalManager.clearIgnoredInboundSignalList(this);
+            TmfSignalManager.clearIgnoredOutboundSignalList(this);
+
+            /* Sync to global context if it's the same trace */
+            if (getTrace().equals(TmfTraceManager.getInstance().getActiveTrace())) {
+                syncToGlobalContext(getTrace());
+            }
+
+        }
+
+        /* Propagate pin state to viewer */
+        getTimeGraphViewer().pinState(pinState);
     }
 }

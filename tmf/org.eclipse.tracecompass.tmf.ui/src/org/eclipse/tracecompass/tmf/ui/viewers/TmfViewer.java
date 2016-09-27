@@ -14,6 +14,7 @@ package org.eclipse.tracecompass.tmf.ui.viewers;
 
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.tracecompass.tmf.core.component.TmfComponent;
+import org.eclipse.tracecompass.tmf.core.signal.TmfSignal;
 import org.eclipse.tracecompass.tmf.core.signal.TmfSignalManager;
 
 /**
@@ -106,11 +107,11 @@ public abstract class TmfViewer extends TmfComponent implements ITmfViewer {
     public void pinState(boolean state) {
         fPinState = state;
         if (fPinState) {
-            TmfSignalManager.deregister(this);
-            TmfSignalManager.registerSourceBlacklist(this);
+            TmfSignalManager.addIgnoredInboundSignal(this, TmfSignal.class);
+            TmfSignalManager.addIgnoredOutboundSignal(this, TmfSignal.class);
         } else {
-            TmfSignalManager.register(this);
-            TmfSignalManager.deregisterSourceBlacklist(this);
+            TmfSignalManager.clearIgnoredInboundSignalList(this);
+            TmfSignalManager.clearIgnoredOutboundSignalList(this);
         }
     }
 

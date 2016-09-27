@@ -150,7 +150,11 @@ public abstract class TmfView extends ViewPart implements ITmfComponent {
             @Override
             public void propertyChange(PropertyChangeEvent event) {
                 if (IAction.CHECKED.equals(event.getProperty())) {
-                    actionsPin(!isPinned());
+                    /* Take action on the pin state */
+                    actionsPin(isPinned());
+
+                    /* Disable the cloning button */
+                    fCloneAction.setEnabled(!isPinned());
                 }
             }
         });
