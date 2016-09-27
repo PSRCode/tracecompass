@@ -175,6 +175,8 @@ public abstract class AbstractTimeGraphView extends TmfView implements ITmfTimeA
     /** The selected trace */
     private ITmfTrace fTrace;
 
+    private TmfTraceContext fTraceContext;
+
     /** The selected trace editor file*/
     private IFile fEditorFile;
 
@@ -1281,6 +1283,17 @@ public abstract class AbstractTimeGraphView extends TmfView implements ITmfTimeA
         return String.format(LOG_STRING_WITH_PARAM, event, getViewId(), parameters);
     }
 
+    /**
+     * Set the view local trace context
+     *
+     * @param traceContext
+     *            The trace context to be set.
+     * @since 3.0
+     */
+    protected void setTraceContext(TmfTraceContext traceContext) {
+        fTraceContext = traceContext;
+    }
+
     // ------------------------------------------------------------------------
     // ViewPart
     // ------------------------------------------------------------------------
@@ -1317,6 +1330,10 @@ public abstract class AbstractTimeGraphView extends TmfView implements ITmfTimeA
                 final long startTime = event.getStartTime();
                 final long endTime = event.getEndTime();
                 TmfTimeRange range = new TmfTimeRange(TmfTimestamp.fromNanos(startTime), TmfTimestamp.fromNanos(endTime));
+
+                /* Update the local trace context */
+                fTraceContext = new TmfTraceContext(fTraceContext.getSelectionRange(), range, fTraceContext.getEditorFile(), fTraceContext.getFilter());
+
                 broadcast(new TmfWindowRangeUpdatedSignal(AbstractTimeGraphView.this, range));
                 startZoomThread(startTime, endTime);
             }
@@ -1327,7 +1344,12 @@ public abstract class AbstractTimeGraphView extends TmfView implements ITmfTimeA
             public void timeSelected(TimeGraphTimeEvent event) {
                 ITmfTimestamp startTime = TmfTimestamp.fromNanos(event.getBeginTime());
                 ITmfTimestamp endTime = TmfTimestamp.fromNanos(event.getEndTime());
+
+                /* Update the local trace context */
+                fTraceContext = new TmfTraceContext(new TmfTimeRange(startTime, endTime), fTraceContext.getWindowRange(), fTraceContext.getEditorFile(), fTraceContext.getFilter());
                 broadcast(new TmfSelectionRangeUpdatedSignal(AbstractTimeGraphView.this, startTime, endTime));
+
+
             }
         });
 
@@ -1572,6 +1594,13 @@ public abstract class AbstractTimeGraphView extends TmfView implements ITmfTimeA
         if (signal.getCurrentRange().getIntersection(fTrace.getTimeRange()) == null) {
             return;
         }
+
+        /* Update the local trace context */
+        TmfTimeRange range = new TmfTimeRange(signal.getCurrentRange().getStartTime(), signal.getCurrentRange().getEndTime());
+        fTraceContext = new TmfTraceContext(fTraceContext.getSelectionRange(), range, fTraceContext.getEditorFile(), fTraceContext.getFilter());
+
+
+        /* Update the time graph viewer */
         final long startTime = signal.getCurrentRange().getStartTime().toNanos();
         final long endTime = signal.getCurrentRange().getEndTime().toNanos();
         Display.getDefault().asyncExec(new Runnable() {
@@ -1617,7 +1646,7 @@ public abstract class AbstractTimeGraphView extends TmfView implements ITmfTimeA
             fZoomThread.cancel();
             fZoomThread = null;
         }
-        if (fTrace != null) {
+        if (fTrace != null && !fTrace.equals(trace)) {
             /* save the filters of the previous trace */
             fFiltersMap.put(fTrace, fTimeGraphWrapper.getFilters());
             /* Calculate vertical position */
@@ -1630,12 +1659,18 @@ public abstract class AbstractTimeGraphView extends TmfView implements ITmfTimeA
 
             fViewContext.put(fTrace, new ViewContext(fCurrentSortColumn, fSortDirection, fTimeGraphWrapper.getSelection(),verticalRatio));
         }
+
         fTrace = trace;
 
-        LOGGER.info(() -> getLogMessage("LoadingTrace", "trace=" + trace.getName())); //$NON-NLS-1$ //$NON-NLS-2$
+        /* Get the global trace context for the loaded trace */
+        fTraceContext = TmfTraceManager.getInstance().getTraceContext(trace);
+
+        fLogger.info(() -> "[TimeGraphView:LoadingTrace] trace=" + trace.getName()); //$NON-NLS-1$
 
         restoreViewContext();
         fEditorFile = TmfTraceManager.getInstance().getTraceEditorFile(trace);
+
+
         synchronized (fEntryListMap) {
             fEntryList = fEntryListMap.get(fTrace);
             if (fEntryList == null) {
@@ -1972,15 +2007,17 @@ public abstract class AbstractTimeGraphView extends TmfView implements ITmfTimeA
                 }
                 long startBound = (fStartTime == Long.MAX_VALUE ? SWT.DEFAULT : fStartTime);
                 long endBound = (fEndTime == Long.MIN_VALUE ? SWT.DEFAULT : fEndTime);
-                fTimeGraphWrapper.getTimeGraphViewer().setTimeBounds(startBound, endBound);
 
-                TmfTraceContext ctx = TmfTraceManager.getInstance().getCurrentTraceContext();
+                fTimeGraphWrapper.getTimeGraphViewer().setTimeBounds(startBound, endBound);
+                TmfTraceContext ctx = fTraceContext;
                 long selectionBeginTime = fTrace == null ? SWT.DEFAULT : ctx.getSelectionRange().getStartTime().toNanos();
                 long selectionEndTime = fTrace == null ? SWT.DEFAULT : ctx.getSelectionRange().getEndTime().toNanos();
                 long startTime = fTrace == null ? SWT.DEFAULT : ctx.getWindowRange().getStartTime().toNanos();
                 long endTime = fTrace == null ? SWT.DEFAULT : ctx.getWindowRange().getEndTime().toNanos();
+
                 startTime = (fStartTime == Long.MAX_VALUE ? SWT.DEFAULT : Math.max(startTime, fStartTime));
                 endTime = (fEndTime == Long.MIN_VALUE ? SWT.DEFAULT : Math.min(endTime, fEndTime));
+
                 fTimeGraphWrapper.getTimeGraphViewer().setSelectionRange(selectionBeginTime, selectionEndTime, false);
                 fTimeGraphWrapper.getTimeGraphViewer().setStartFinishTime(startTime, endTime);
 
@@ -2209,7 +2246,7 @@ public abstract class AbstractTimeGraphView extends TmfView implements ITmfTimeA
             return false;
         }
 
-        TmfTraceContext ctx = TmfTraceManager.getInstance().getCurrentTraceContext();
+        TmfTraceContext ctx = fTraceContext;
         long startTime = ctx.getWindowRange().getStartTime().toNanos();
         long endTime = ctx.getWindowRange().getEndTime().toNanos();
 
