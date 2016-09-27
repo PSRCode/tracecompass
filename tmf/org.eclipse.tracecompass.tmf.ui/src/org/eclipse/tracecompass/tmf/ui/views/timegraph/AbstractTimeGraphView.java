@@ -1733,6 +1733,17 @@ public abstract class AbstractTimeGraphView extends TmfView implements ITmfTimeA
     }
 
     /**
+     * Populate the view with the global context for the passed trace
+     * @since 3.0
+     */
+    protected void syncToGlobalContext(final ITmfTrace trace) {
+        if (trace == null) {
+            return;
+        }
+        loadTrace(trace);
+    }
+
+    /**
      * Forces a rebuild of the entries list, even if entries already exist for this trace
      */
     protected void rebuild() {
