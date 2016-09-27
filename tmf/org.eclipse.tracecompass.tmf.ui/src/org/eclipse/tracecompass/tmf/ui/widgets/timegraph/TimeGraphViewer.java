@@ -93,7 +93,7 @@ import org.eclipse.ui.PlatformUI;
  *
  * @author Patrick Tasse, and others
  */
-public class TimeGraphViewer implements ITimeDataProvider, IMarkerAxisListener, SelectionListener {
+public class TimeGraphViewer extends TmfViewer implements ITimeDataProvider, IMarkerAxisListener, SelectionListener {
 
     /** Constant indicating that all levels of the time graph should be expanded */
     public static final int ALL_LEVELS = AbstractTreeViewer.ALL_LEVELS;
