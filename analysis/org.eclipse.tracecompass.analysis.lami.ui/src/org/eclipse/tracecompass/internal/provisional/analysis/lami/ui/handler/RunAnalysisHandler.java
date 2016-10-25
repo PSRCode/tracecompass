@@ -38,6 +38,7 @@ import org.eclipse.tracecompass.tmf.core.analysis.ondemand.IOnDemandAnalysisRepo
 import org.eclipse.tracecompass.tmf.core.timestamp.TmfTimeRange;
 import org.eclipse.tracecompass.tmf.core.trace.ITmfTrace;
 import org.eclipse.tracecompass.tmf.core.trace.TmfTraceManager;
+import org.eclipse.tracecompass.tmf.ui.project.handlers.HandlerUtils;
 import org.eclipse.tracecompass.tmf.ui.project.model.TmfCommonProjectElement;
 import org.eclipse.tracecompass.tmf.ui.project.model.TmfOnDemandAnalysisElement;
 import org.eclipse.tracecompass.tmf.ui.project.model.TmfReportsElement;
