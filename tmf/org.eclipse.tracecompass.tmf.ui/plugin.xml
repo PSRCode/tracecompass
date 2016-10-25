@@ -756,6 +756,28 @@
               </with>
            </visibleWhen>
         </command>
+         <command
+               commandId="org.eclipse.tracecompass.tmf.ui.command.trim_trace"
+               label="%command.trim_trace"
+               mnemonic="%command.trim_trace.mnemonic"
+               style="push"
+               tooltip="%command.trim_trace.description">
+            <visibleWhen
+                  checkEnabled="false">
+               <and>
+                  <count
+                        value="1">
+                  </count>
+                  <iterate
+                        ifEmpty="false"
+                        operator="or">
+                     <instanceof
+                           value="org.eclipse.tracecompass.tmf.ui.project.model.TmfTraceElement">
+                     </instanceof>
+                  </iterate>
+               </and>
+            </visibleWhen>
+         </command>
          <separator
                name="org.eclipse.linuxtools.tmf.ui.separator3"
                visible="true">
@@ -1228,6 +1250,11 @@
             id="org.eclipse.linuxtools.tmf.ui.command.clear_offset"
             name="%command.clear_offset">
       </command>
+      <command
+            description="%command.trim_trace.description"
+            id="org.eclipse.tracecompass.tmf.ui.command.trim_trace"
+            name="%command.trim_trace">
+      </command>
    </extension>
    <extension
          point="org.eclipse.ui.handlers">
@@ -1469,6 +1496,10 @@
                </or>
             </iterate>
          </activeWhen>
+      </handler>
+      <handler
+            class="org.eclipse.tracecompass.internal.tmf.ui.project.handlers.TrimTraceHandler"
+            commandId="org.eclipse.tracecompass.tmf.ui.command.trim_trace">
       </handler>
       <handler
             class="org.eclipse.tracecompass.internal.tmf.ui.project.handlers.NewFolderHandler"
