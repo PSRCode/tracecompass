@@ -16,6 +16,8 @@ package org.eclipse.tracecompass.tmf.ui.views;
 
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.widgets.Composite;
@@ -108,8 +110,8 @@ public abstract class TmfView extends ViewPart implements ITmfComponent {
     // ------------------------------------------------------------------------
 
     /**
-     * Returns whether the pin flag is set.
-     * For example, this flag can be used to ignore time synchronization signals from other TmfViews.
+     * Returns whether the pin flag is set. For example, this flag can be used
+     * to ignore time synchronization signals from other TmfViews.
      *
      * @return pin flag
      */
@@ -118,8 +120,9 @@ public abstract class TmfView extends ViewPart implements ITmfComponent {
     }
 
     /**
-     * Method adds a pin action to the TmfView. The pin action allows to toggle the <code>fIsPinned</code> flag.
-     * For example, this flag can be used to ignore time synchronization signals from other TmfViews.
+     * Method adds a pin action to the TmfView. The pin action allows to toggle
+     * the <code>fIsPinned</code> flag. For example, this flag can be used to
+     * ignore time synchronization signals from other TmfViews.
      */
     protected void contributePinActionToToolBar() {
         if (fPinAction == null) {
@@ -130,11 +133,35 @@ public abstract class TmfView extends ViewPart implements ITmfComponent {
             toolBarManager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
             toolBarManager.add(fPinAction);
         }
+
+        fPinAction.addPropertyChangeListener(new IPropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent event) {
+                if (IAction.CHECKED.equals(event.getProperty())) {
+                    /* Take action on the pin state */
+                    actionsPin(isPinned());
+                }
+            }
+        });
+    }
+
+    /**
+     * TODO: change to abstract on API break
+     * Actions to take on pin property change.
+     * @param pinState
+     *            The pin state to take action on
+     * @since 2.2
+     */
+    protected void actionsPin(boolean pinState) {
+        /** Do nothing by default */
     }
 
     @Override
     public void createPartControl(final Composite parent) {
         fParentComposite = parent;
+
+        contributePinActionToToolBar();
+
         if (this instanceof ITmfTimeAligned) {
             contributeAlignViewsActionToToolbar();
 

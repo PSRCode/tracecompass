@@ -432,4 +432,14 @@ public class FlameGraphView extends TmfView {
         setSortOption(SortOption.fromName(sortOption));
     }
 
+    @Override
+    protected void actionsPin(boolean pinState) {
+        //TODO: For now do nothing
+    }
+
+    @Override
+    protected void contributePinActionToToolBar() {
+        //TODO: Do not contribute Pin action since actionPin is not defined
+    }
+
 }

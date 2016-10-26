@@ -439,5 +439,13 @@ public class ResourcesView extends AbstractStateSystemTimeGraphView {
         TmfTraceContext ctx = TmfTraceManager.getInstance().getCurrentTraceContext();
         ctx.setData(RESOURCES_FOLLOW_CPU, data);
     }
+    @Override
+    protected void actionsPin(boolean pinState) {
+        //TODO: For now do nothing
+    }
 
+    @Override
+    protected void contributePinActionToToolBar() {
+        //TODO: Do not contribute Pin action since actionPin is not defined
+    }
 }
