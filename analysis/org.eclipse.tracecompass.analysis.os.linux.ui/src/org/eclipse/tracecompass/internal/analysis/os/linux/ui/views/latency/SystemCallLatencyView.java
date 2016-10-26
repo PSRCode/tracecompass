@@ -38,4 +38,10 @@ public class SystemCallLatencyView extends AbstractSegmentStoreTableView {
     protected AbstractSegmentStoreTableViewer createSegmentStoreViewer(TableViewer tableViewer) {
         return new SystemCallLatencyTableViewer(tableViewer);
     }
+
+    @Override
+    protected boolean canBePinned() {
+        //TODO: actionPin is not defined
+        return false;
+    }
 }

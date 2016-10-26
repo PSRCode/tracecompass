@@ -30,5 +30,4 @@ public class SystemCallLatencyStatisticsView extends AbstractSegmentStoreStatist
     protected AbstractSegmentStoreStatisticsViewer createSegmentStoreStatisticsViewer(Composite parent) {
         return new SystemCallLatencyStatisticsViewer(parent);
     }
-
 }

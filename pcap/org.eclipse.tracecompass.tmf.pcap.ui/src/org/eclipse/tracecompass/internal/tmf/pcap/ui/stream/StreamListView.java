@@ -509,4 +509,10 @@ public class StreamListView extends TmfView {
         }
     }
 
+    @Override
+    protected boolean canBePinned() {
+        //TODO: actionPin is not defined
+        return false;
+    }
+
 }

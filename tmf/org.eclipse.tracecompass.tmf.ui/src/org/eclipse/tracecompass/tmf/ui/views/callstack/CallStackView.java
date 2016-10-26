@@ -35,8 +35,6 @@ import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.util.IPropertyChangeListener;
-import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.ISelection;
@@ -422,7 +420,6 @@ public class CallStackView extends AbstractTimeGraphView {
             }
         });
 
-        contributeToActionBars();
         loadSortOption();
 
         IEditorPart editor = getSite().getPage().getActiveEditor();
@@ -909,26 +906,24 @@ public class CallStackView extends AbstractTimeGraphView {
         fNextItemAction.setToolTipText(Messages.TmfTimeGraphViewer_NextItemActionToolTipText);
     }
 
-    private void contributeToActionBars() {
-        // Create pin action
-        contributePinActionToToolBar();
-        fPinAction.addPropertyChangeListener(new IPropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent event) {
-                if (IAction.CHECKED.equals(event.getProperty()) && !isPinned()) {
-                    if (fSavedRangeSyncSignal != null) {
-                        windowRangeUpdated(fSavedRangeSyncSignal);
-                        fSavedRangeSyncSignal = null;
-                    }
+    /**
+     * @since 2.2
+     */
+    @Override
+    protected synchronized void setPinned(boolean state) {
+       if (!state) {
+           if (fSavedRangeSyncSignal != null) {
+               windowRangeUpdated(fSavedRangeSyncSignal);
+               fSavedRangeSyncSignal = null;
+           }
 
-                    if (fSavedTimeSyncSignal != null) {
-                        selectionRangeUpdated(fSavedTimeSyncSignal);
-                        fSavedTimeSyncSignal = null;
-                    }
-                }
-            }
-        });
+           if (fSavedTimeSyncSignal != null) {
+               selectionRangeUpdated(fSavedTimeSyncSignal);
+               fSavedTimeSyncSignal = null;
+           }
+       }
     }
+
 
     /**
      * @since 1.2
