@@ -14,6 +14,7 @@
 
 package org.eclipse.tracecompass.tmf.ui.views;
 
+import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.swt.events.ControlAdapter;
@@ -51,7 +52,20 @@ public abstract class TmfView extends ViewPart implements ITmfComponent {
      * Action class for pinning of TmfView.
      */
     protected PinTmfViewAction fPinAction;
+
+    /**
+     * Action class for spawning a new view based on this view type.
+     *
+     * @since 2.2
+     */
+    protected NewTmfViewAction fNewAction;
     private static TimeAlignViewsAction fAlignViewsAction;
+
+    /**
+     * The separator used for distinguishing between primary and secondary id of a view id.
+     * @since 2.2
+     */
+    public static final String PRIMARY_SECONDARY_ID_SEPARATOR = ":"; //$NON-NLS-1$
 
     // ------------------------------------------------------------------------
     // Constructor
@@ -132,9 +146,38 @@ public abstract class TmfView extends ViewPart implements ITmfComponent {
         }
     }
 
+    /**
+     * Add the "New view" action to the expandable menu. This action spawn a new
+     * view of the same type as the caller.
+     *
+     * @since 2.2
+     */
+    protected void contributeNewActionToMenu() {
+        if (fNewAction == null) {
+            fNewAction = new NewTmfViewAction(TmfView.this) {
+                @Override
+                public void run() {
+                    TmfViewFactory.newView(TmfView.this.getViewId(), true);
+                }
+            };
+
+            IMenuManager menuManager = getViewSite().getActionBars()
+                    .getMenuManager();
+            menuManager.add(fNewAction);
+        }
+    }
+
     @Override
     public void createPartControl(final Composite parent) {
         fParentComposite = parent;
+        IMenuManager menuManager = getViewSite().getActionBars()
+                .getMenuManager();
+
+        /* Add to menu */
+        contributeNewActionToMenu();
+        menuManager.add(new Separator());
+
+
         if (this instanceof ITmfTimeAligned) {
             contributeAlignViewsActionToToolbar();
 
@@ -215,6 +258,6 @@ public abstract class TmfView extends ViewPart implements ITmfComponent {
         if (secondaryId == null) {
             return viewSite.getId();
         }
-        return viewSite.getId() + ':' + secondaryId;
+        return viewSite.getId() + PRIMARY_SECONDARY_ID_SEPARATOR + secondaryId;
     }
 }

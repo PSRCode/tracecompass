@@ -56,6 +56,7 @@ import org.eclipse.tracecompass.statesystem.core.statevalue.ITmfStateValue;
 import org.eclipse.tracecompass.tmf.core.statesystem.ITmfAnalysisModuleWithStateSystems;
 import org.eclipse.tracecompass.tmf.core.trace.ITmfTrace;
 import org.eclipse.tracecompass.tmf.core.trace.TmfTraceUtils;
+import org.eclipse.tracecompass.tmf.ui.views.TmfViewFactory;
 import org.eclipse.tracecompass.tmf.ui.views.timegraph.AbstractTimeGraphView;
 import org.eclipse.tracecompass.tmf.ui.widgets.timegraph.ITimeGraphPresentationProvider2;
 import org.eclipse.tracecompass.tmf.ui.widgets.timegraph.model.ILinkEvent;
@@ -137,7 +138,7 @@ public class XmlTimeGraphView extends AbstractTimeGraphView {
     @Override
     public void createPartControl(Composite parent) {
         super.createPartControl(parent);
-        fViewInfo.setName(NonNullUtils.checkNotNull(getViewSite().getSecondaryId()));
+        fViewInfo.setName(NonNullUtils.checkNotNull(TmfViewFactory.getBaseSecId(getViewSite().getSecondaryId())));
     }
 
     private void loadNewXmlView() {
