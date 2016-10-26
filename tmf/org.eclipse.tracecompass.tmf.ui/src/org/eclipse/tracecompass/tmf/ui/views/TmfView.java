@@ -14,8 +14,11 @@
 
 package org.eclipse.tracecompass.tmf.ui.views;
 
+import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.widgets.Composite;
@@ -108,18 +111,20 @@ public abstract class TmfView extends ViewPart implements ITmfComponent {
     // ------------------------------------------------------------------------
 
     /**
-     * Returns whether the pin flag is set.
-     * For example, this flag can be used to ignore time synchronization signals from other TmfViews.
+     * Returns whether the view is pinned.
      *
-     * @return pin flag
+     * @return if the view is pinned
      */
     public boolean isPinned() {
         return ((fPinAction != null) && (fPinAction.isChecked()));
     }
 
     /**
-     * Method adds a pin action to the TmfView. The pin action allows to toggle the <code>fIsPinned</code> flag.
-     * For example, this flag can be used to ignore time synchronization signals from other TmfViews.
+     * Method adds a pin action to the TmfView. For example, this action can be
+     * used to ignore time synchronization signals from other TmfViews. <br>
+     *
+     * Uses {@link TmfView#setPinned(boolean)} to propagate the state of the
+     * action button.
      */
     protected void contributePinActionToToolBar() {
         if (fPinAction == null) {
@@ -130,11 +135,56 @@ public abstract class TmfView extends ViewPart implements ITmfComponent {
             toolBarManager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
             toolBarManager.add(fPinAction);
         }
+
+        fPinAction.addPropertyChangeListener(new IPropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent event) {
+                if (IAction.CHECKED.equals(event.getProperty())) {
+                    /* Take action on the pin state */
+                    Object value = event.getNewValue();
+                    if (!(value instanceof Boolean)) {
+                        throw new IllegalStateException();
+                    }
+                    setPinned((Boolean) value);
+                }
+            }
+        });
+    }
+
+    /**
+     * TODO: change to abstract on API break <br>
+     * <br>
+     * When this method return <code>True</code> a toggle button is added to the
+     * view toolbar.<br>
+     * <br>
+     * One should implement {@link TmfView#setPinned(boolean)} to take action on state change.
+     *
+     * @return if the view can be pined
+     * @since 2.2
+     */
+    protected boolean canBePinned() {
+        return true;
+    }
+
+    /**
+     * TODO: change to abstract on API break
+     * Actions to take on pin property change.
+     * @param pinned
+     *            The pin state to take action on
+     * @since 2.2
+     */
+    protected synchronized void setPinned(boolean pinned) {
+        /** Do nothing by default */
     }
 
     @Override
     public void createPartControl(final Composite parent) {
         fParentComposite = parent;
+
+        if (canBePinned()) {
+            contributePinActionToToolBar();
+        }
+
         if (this instanceof ITmfTimeAligned) {
             contributeAlignViewsActionToToolbar();
 

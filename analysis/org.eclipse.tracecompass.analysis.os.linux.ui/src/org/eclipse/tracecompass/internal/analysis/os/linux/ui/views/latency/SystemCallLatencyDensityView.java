@@ -51,5 +51,4 @@ public class SystemCallLatencyDensityView extends AbstractSegmentStoreDensityVie
     protected AbstractSegmentStoreDensityViewer createSegmentStoreDensityViewer(Composite parent) {
         return new SystemCallDensityViewer(parent);
     }
-
 }

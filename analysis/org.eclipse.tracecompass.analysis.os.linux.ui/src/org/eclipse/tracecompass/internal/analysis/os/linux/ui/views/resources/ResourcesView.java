@@ -440,4 +440,9 @@ public class ResourcesView extends AbstractStateSystemTimeGraphView {
         ctx.setData(RESOURCES_FOLLOW_CPU, data);
     }
 
+    @Override
+    protected boolean canBePinned() {
+        //TODO: actionPin is not defined
+        return false;
+    }
 }

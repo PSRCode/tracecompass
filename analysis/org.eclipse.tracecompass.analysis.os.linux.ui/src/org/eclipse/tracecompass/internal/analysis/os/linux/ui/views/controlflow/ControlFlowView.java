@@ -1053,4 +1053,11 @@ public class ControlFlowView extends AbstractStateSystemTimeGraphView {
         }
         return null;
     }
+
+    @Override
+    protected boolean canBePinned() {
+        //TODO: actionPin is not defined
+        return false;
+    }
+
 }

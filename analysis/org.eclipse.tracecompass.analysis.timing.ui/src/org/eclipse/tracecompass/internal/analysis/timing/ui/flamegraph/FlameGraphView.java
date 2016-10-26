@@ -432,4 +432,10 @@ public class FlameGraphView extends TmfView {
         setSortOption(SortOption.fromName(sortOption));
     }
 
+    @Override
+    protected boolean canBePinned() {
+        //TODO: actionPin is not defined
+        return false;
+    }
+
 }

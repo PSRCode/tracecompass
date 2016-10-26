@@ -41,4 +41,10 @@ public class SegmentStoreTableView extends AbstractSegmentStoreTableView {
         String analysisId = NonNullUtils.nullToEmptyString(getViewSite().getSecondaryId());
         return new SegmentStoreTableViewer(tableViewer, analysisId);
     }
+
+    @Override
+    protected boolean canBePinned() {
+        //TODO: actionPin is not defined
+        return false;
+    }
 }

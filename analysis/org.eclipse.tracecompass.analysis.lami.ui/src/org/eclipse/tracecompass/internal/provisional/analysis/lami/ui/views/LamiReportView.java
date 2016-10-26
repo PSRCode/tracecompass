@@ -188,4 +188,9 @@ public final class LamiReportView extends TmfView {
         return fTabPages.get(idx);
     }
 
+    @Override
+    protected boolean canBePinned() {
+        //TODO: actionPin is not defined
+        return false;
+    }
 }
