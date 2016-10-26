@@ -21,9 +21,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.Optional;
 
 import org.eclipse.tracecompass.internal.tmf.core.Activator;
 import org.eclipse.tracecompass.internal.tmf.core.TmfCoreTracer;
+
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 
 /**
  * This class manages the set of signal listeners and the signals they are
@@ -41,6 +45,9 @@ public class TmfSignalManager {
     // the signal data type.
     private static Map<Object, Method[]> fListeners = new HashMap<>();
     private static Map<Object, Method[]> fVIPListeners = new HashMap<>();
+
+    private static Multimap<Object,Class<? extends TmfSignal>> fOutboundSignalBlacklist = HashMultimap.create();
+    private static Multimap<Object,Class<? extends TmfSignal>> fInboundSignalBlacklist = HashMultimap.create();
 
     // The signal executor for asynchronous signals
     private static final ExecutorService fExecutor = Executors.newSingleThreadExecutor();
@@ -74,6 +81,85 @@ public class TmfSignalManager {
     }
 
     /**
+     * Ignore the outbound signal type from the specified source.
+     * One can ignore all signals by passing TmfSignal.class as the signal class.
+     *
+     * @param source
+     *            The source object
+     * @param signal
+     *            The signal class to ignore
+     * @since 2.2
+     */
+    public static synchronized void addIgnoredOutboundSignal(Object source, Class<? extends TmfSignal> signal) {
+        fOutboundSignalBlacklist.put(source, signal);
+    }
+
+    /**
+     * Ignore the inbound signal type for the specified listener.
+     * All signals can be ignored by passing TmfSignal.class.
+     *
+     * @param listener
+     *            The listener object for which the signal must be ignored
+     * @param signal
+     *            The signal class to ignore
+     * @since 2.2
+     */
+    public static synchronized void addIgnoredInboundSignal(Object listener, Class<? extends TmfSignal> signal) {
+        fInboundSignalBlacklist.put(listener, signal);
+    }
+
+    /**
+     * Remove the signal from the list of ignored outbound signal for the
+     * specified source if present.
+     *
+     * @param source
+     *            The source object
+     * @param signal
+     *            The signal class to remove from the ignore list
+     * @since 2.2
+     */
+    public static synchronized void removeIgnoredOutboundSignal(Object source, Class<? extends TmfSignal> signal) {
+        fOutboundSignalBlacklist.remove(source, signal);
+    }
+
+    /**
+     * Remove the signal from the list of inbound ignored signals for the
+     * specified listener if present.
+     *
+     * @param listener
+     *            The listener object
+     * @param signal
+     *            The signal class to remove from the ignore list
+     * @since 2.2
+     */
+    public static synchronized void removeIgnoredInboundSignal(Object listener, Class<? extends TmfSignal> signal) {
+        fInboundSignalBlacklist.remove(listener, signal);
+    }
+
+
+    /**
+     * Clear the list of ignored outbound signals for the source
+     *
+     * @param source
+     *            The source object
+     * @since 2.2
+     */
+    public static synchronized void clearIgnoredOutboundSignalList(Object source) {
+        fOutboundSignalBlacklist.removeAll(source);
+    }
+
+    /**
+     * Clear the list of ignored inbound signals for the listener
+     *
+     * @param listener
+     *            The listener object
+     * @since 2.2
+     */
+    public static synchronized void clearIgnoredInboundSignalList(Object listener) {
+        fInboundSignalBlacklist.removeAll(listener);
+    }
+
+    /**
      * Register an object to the signal manager as a "VIP" listener. All VIP
      * listeners will all receive the signal before the manager moves on to the
      * lowly, non-VIP listeners.
@@ -99,6 +185,7 @@ public class TmfSignalManager {
     public static synchronized void deregister(Object listener) {
         fVIPListeners.remove(listener);
         fListeners.remove(listener);
+        fInboundSignalBlacklist.removeAll(listener);
     }
 
     /**
@@ -137,6 +224,18 @@ public class TmfSignalManager {
      *            the signal to dispatch
      */
     public static synchronized void dispatchSignal(TmfSignal signal) {
+
+        /** Check if the source,signal tuple is blacklisted */
+        if(fOutboundSignalBlacklist.containsKey(signal.getSource())){
+            Optional<Class<? extends TmfSignal>> ignoredClass;
+            ignoredClass = fOutboundSignalBlacklist.get(signal.getSource()).stream()
+                    .filter( x ->  x.isAssignableFrom(signal.getClass()))
+                    .findAny();
+            if (ignoredClass.isPresent()) {
+                return;
+            }
+        }
+
         int signalId = fSignalId++;
         sendSignal(new TmfStartSynchSignal(signalId));
         signal.setReference(signalId);
@@ -184,15 +283,31 @@ public class TmfSignalManager {
             TmfCoreTracer.traceSignal(signal, "(start)"); //$NON-NLS-1$
         }
 
+
         // Build the list of listener methods that are registered for this signal
         Class<?> signalClass = signal.getClass();
+        java.util.Optional<Class<? extends TmfSignal>> ignoredClass;
+
         Map<Object, List<Method>> targets = new HashMap<>();
         targets.clear();
         for (Map.Entry<Object, Method[]> entry : listeners.entrySet()) {
             List<Method> matchingMethods = new ArrayList<>();
             for (Method method : entry.getValue()) {
-                if (method.getParameterTypes()[0].isAssignableFrom(signalClass)) {
-                    matchingMethods.add(method);
+                Class<?> classParam = method.getParameterTypes()[0];
+                if (classParam.isAssignableFrom(signalClass)) {
+                    if (!fInboundSignalBlacklist.containsKey(entry.getKey())) {
+                        /* Simply add it */
+                        matchingMethods.add(method);
+                    } else {
+                        /* Check if any of the ignore rule apply to the signal */
+                        ignoredClass = fInboundSignalBlacklist.get(entry.getKey()).stream()
+                                .filter( x ->  x.isAssignableFrom(classParam))
+                                .findAny();
+                        if (!ignoredClass.isPresent()) {
+                            /* No rules apply */
+                            matchingMethods.add(method);
+                        }
+                    }
                 }
             }
             if (!matchingMethods.isEmpty()) {
