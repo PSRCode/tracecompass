@@ -475,4 +475,9 @@ public class VirtualMachineView extends AbstractTimeGraphView {
         return Collections.singleton(trace);
     }
 
+    @Override
+    protected boolean canBePinned() {
+        //TODO: actionPin is not defined
+        return false;
+    }
 }

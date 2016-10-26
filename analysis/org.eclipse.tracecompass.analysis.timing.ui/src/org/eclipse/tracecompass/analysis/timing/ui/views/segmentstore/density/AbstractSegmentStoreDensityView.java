@@ -162,4 +162,10 @@ public abstract class AbstractSegmentStoreDensityView extends TmfView {
     public @Nullable AbstractSegmentStoreTableViewer getTableViewer() {
         return fTableViewer;
     }
+
+    @Override
+    protected boolean canBePinned() {
+        //TODO: actionPin is not defined
+        return false;
+    }
 }

@@ -1020,4 +1020,10 @@ public class HistogramView extends TmfView implements ITmfTimeAligned {
             return point;
         }
     }
+
+    @Override
+    protected boolean canBePinned() {
+        //TODO: actionPin is not defined
+        return false;
+    }
 }

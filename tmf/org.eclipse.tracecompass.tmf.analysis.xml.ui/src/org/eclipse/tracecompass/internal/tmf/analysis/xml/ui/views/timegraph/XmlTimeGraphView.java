@@ -580,4 +580,10 @@ public class XmlTimeGraphView extends AbstractTimeGraphView {
         return (trace != null) ? Collections.singleton(trace) : Collections.EMPTY_LIST;
     }
 
+    @Override
+    protected boolean canBePinned() {
+        //TODO: actionPin is not defined
+        return false;
+    }
+
 }
