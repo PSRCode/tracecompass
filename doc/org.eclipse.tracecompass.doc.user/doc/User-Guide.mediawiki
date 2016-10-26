@@ -2056,6 +2056,10 @@ View Menu
 
 {|
 |
+| New Control Flow view
+| Spawn a new control flow view.
+|-
+|
 | Show Markers
 | A marker highlights a time interval. A marker can be used for instance to indicate a time range where lost events occurred or to bookmark an interesting interval for future reference. Selecting a category name will toggle the visibility of markers of that category.
 |-
@@ -2185,6 +2189,10 @@ The Resources View '''toolbar''', located at the top right of the view, has shor
 View Menu
 
 {|
+|
+| New Resources view
+| Spawn a new resources view.
+|-
 |
 | Show Markers
 | A marker highlights a time interval. A marker can be used for instance to indicate a time range where lost events occurred or to bookmark an interesting interval for future reference. Selecting a category name will toggle the visibility of markers of that category.
