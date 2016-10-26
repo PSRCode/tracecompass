@@ -148,4 +148,14 @@ public abstract class AbstractSegmentStoreStatisticsView extends TmfView {
         }
     }
 
+    @Override
+    protected void actionsPin(boolean pinState) {
+        //TODO: For now do nothing
+    }
+
+    @Override
+    protected void contributePinActionToToolBar() {
+        //TODO: Do not contribute Pin action since actionPin is not defined
+    }
+
 }
