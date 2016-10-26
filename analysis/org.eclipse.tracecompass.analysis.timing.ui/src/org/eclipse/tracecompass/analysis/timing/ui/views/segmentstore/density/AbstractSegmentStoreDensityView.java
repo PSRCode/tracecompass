@@ -144,4 +144,10 @@ public abstract class AbstractSegmentStoreDensityView extends TmfView {
     AbstractSegmentStoreDensityViewer getDensityViewer() {
         return fDensityViewer;
     }
+
+    @Override
+    protected boolean canBePinned() {
+        //TODO: actionPin is not defined
+        return false;
+    }
 }
