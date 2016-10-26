@@ -322,6 +322,8 @@ public class Messages extends NLS {
     public static String TmfView_PinActionToolTipText;
     public static String TmfView_AlignViewsActionNameText;
     public static String TmfView_AlignViewsActionToolTipText;
+    public static String TmfView_NewTmfViewNameText;
+    public static String TmfView_NewTmfViewToolTipText;
 
     public static String CallStackPresentationProvider_Thread;
     public static String CallStackView_FunctionColumn;

@@ -22,6 +22,7 @@ import org.eclipse.tracecompass.internal.tmf.analysis.xml.ui.TmfXmlUiStrings;
 import org.eclipse.tracecompass.internal.tmf.analysis.xml.ui.views.XmlViewInfo;
 import org.eclipse.tracecompass.tmf.ui.viewers.xycharts.TmfXYChartViewer;
 import org.eclipse.tracecompass.tmf.ui.views.TmfChartView;
+import org.eclipse.tracecompass.tmf.ui.views.TmfViewFactory;
 import org.w3c.dom.Element;
 
 /**
@@ -94,7 +95,7 @@ public class XmlXYView extends TmfChartView {
     @Override
     public void createPartControl(@Nullable Composite parent) {
         super.createPartControl(parent);
-        fViewInfo.setName(NonNullUtils.checkNotNull(getViewSite().getSecondaryId()));
+        fViewInfo.setName(NonNullUtils.checkNotNull(TmfViewFactory.getBaseSecId(getViewSite().getSecondaryId())));
         setViewTitle();
     }
 
