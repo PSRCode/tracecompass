@@ -145,6 +145,9 @@ public class TimeGraphCombo extends Composite {
 
     private Font fTreeFont;
 
+    /** The pin state of the combo */
+    private boolean fPinState = false;
+
     // ------------------------------------------------------------------------
     // Classes
     // ------------------------------------------------------------------------
@@ -1507,5 +1510,32 @@ public class TimeGraphCombo extends Composite {
         int marginSize = timeBasedControlsWidth - width;
         layout.marginRight = Math.max(0, marginSize);
         composite.layout();
+    }
+
+    /**
+     * Gets the pin state.
+     *
+     * @return the pin state
+     * @since 2.2
+     */
+    public boolean getPinState() {
+        return fPinState;
+    }
+
+    /**
+     * Sets the pin state.
+     *
+     * @param state
+     *            The new pin state
+     * @since 2.2
+     */
+    public void setPinState(boolean state) {
+        fPinState = state;
+
+        boolean enabled = !state;
+
+        fShowFilterDialogAction.setEnabled(enabled);
+
+        fTimeGraphViewer.setPinState(state);
     }
 }
