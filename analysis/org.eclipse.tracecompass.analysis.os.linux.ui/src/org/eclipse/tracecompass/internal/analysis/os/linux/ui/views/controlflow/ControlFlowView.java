@@ -166,6 +166,8 @@ public class ControlFlowView extends AbstractStateSystemTimeGraphView {
     private IAction fFlatAction;
 
     private IAction fHierarchicalAction;
+    private IAction fPreviousEventAction;
+    private IAction fNextEventAction;
 
     // ------------------------------------------------------------------------
     // Constructors
@@ -238,17 +240,17 @@ public class ControlFlowView extends AbstractStateSystemTimeGraphView {
         followArrowFwdAction.setToolTipText(Messages.ControlFlowView_followCPUFwdText);
         manager.add(followArrowFwdAction);
 
-        IAction previousEventAction = new SearchEventAction(false, PackageMessages.ControlFlowView_PreviousEventJobName);
-        previousEventAction.setText(PackageMessages.ControlFlowView_PreviousEventActionName);
-        previousEventAction.setToolTipText(PackageMessages.ControlFlowView_PreviousEventActionTooltip);
-        previousEventAction.setImageDescriptor(Activator.getDefault().getImageDescripterFromPath(PREV_EVENT_ICON_PATH));
-        manager.add(previousEventAction);
+        fPreviousEventAction = new SearchEventAction(false, PackageMessages.ControlFlowView_PreviousEventJobName);
+        fPreviousEventAction.setText(PackageMessages.ControlFlowView_PreviousEventActionName);
+        fPreviousEventAction.setToolTipText(PackageMessages.ControlFlowView_PreviousEventActionTooltip);
+        fPreviousEventAction.setImageDescriptor(Activator.getDefault().getImageDescripterFromPath(PREV_EVENT_ICON_PATH));
+        manager.add(fPreviousEventAction);
 
-        IAction nextEventAction = new SearchEventAction(true, PackageMessages.ControlFlowView_NextEventJobName);
-        nextEventAction.setText(PackageMessages.ControlFlowView_NextEventActionName);
-        nextEventAction.setToolTipText(PackageMessages.ControlFlowView_NextEventActionTooltip);
-        nextEventAction.setImageDescriptor(Activator.getDefault().getImageDescripterFromPath(NEXT_EVENT_ICON_PATH));
-        manager.add(nextEventAction);
+        fNextEventAction = new SearchEventAction(true, PackageMessages.ControlFlowView_NextEventJobName);
+        fNextEventAction.setText(PackageMessages.ControlFlowView_NextEventActionName);
+        fNextEventAction.setToolTipText(PackageMessages.ControlFlowView_NextEventActionTooltip);
+        fNextEventAction.setImageDescriptor(Activator.getDefault().getImageDescripterFromPath(NEXT_EVENT_ICON_PATH));
+        manager.add(fNextEventAction);
     }
 
     private IAction getOptimizationAction() {
