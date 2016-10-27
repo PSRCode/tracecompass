@@ -192,6 +192,18 @@ public class TimeGraphControl extends TimeGraphBaseControl
     private int fBorderWidth = 0;
     private int fHeaderHeight = 0;
 
+    /** Feature toggle switch */
+    private boolean fPrevEventEnabled = true;
+    private boolean fNextEventEnabled = true;
+    private boolean fGrabAndPanEnabled = true;
+    private boolean fSelectionZoomEnabled = true;
+    private boolean fHorizontalZoomEnabled = true;
+    private boolean fHorizontalScrollEnabled = true;
+    private boolean fTimeRangeSelectionEnabled = true;
+
+    /** Toggle switch for pinned behavior */
+    private boolean fUsePinnedSelectionColor = false;
+
     /**
      * Standard constructor
      *
@@ -996,6 +1008,9 @@ public class TimeGraphControl extends TimeGraphBaseControl
      * @since 1.0
      */
     public void selectNextEvent(boolean extend) {
+        if (!fNextEventEnabled) {
+            return;
+        }
         selectEvent(1, extend);
         // Notify if visible time window has been adjusted
         fTimeProvider.setStartFinishTimeNotify(fTimeProvider.getTime0(), fTimeProvider.getTime1());
@@ -1009,6 +1024,9 @@ public class TimeGraphControl extends TimeGraphBaseControl
      * @since 1.0
      */
     public void selectPrevEvent(boolean extend) {
+        if (!fPrevEventEnabled) {
+            return;
+        }
         selectEvent(-1, extend);
         // Notify if visible time window has been adjusted
         fTimeProvider.setStartFinishTimeNotify(fTimeProvider.getTime0(), fTimeProvider.getTime1());
@@ -1035,6 +1053,9 @@ public class TimeGraphControl extends TimeGraphBaseControl
      *            true to scroll left, false to scroll right
      */
     public void horizontalScroll(boolean left) {
+        if (fHorizontalScrollEnabled) {
+            return;
+        }
         long time0 = fTimeProvider.getTime0();
         long time1 = fTimeProvider.getTime1();
         long timeMin = fTimeProvider.getMinTime();
@@ -1060,6 +1081,10 @@ public class TimeGraphControl extends TimeGraphBaseControl
      * @param zoomIn true to zoom in, false to zoom out
      */
     public void zoom(boolean zoomIn) {
+        if (!fHorizontalZoomEnabled) {
+            return;
+        }
+
         int globalX = getDisplay().getCursorLocation().x;
         Point p = toControl(globalX, 0);
         int nameSpace = fTimeProvider.getNameSpace();
@@ -1675,7 +1700,14 @@ public class TimeGraphControl extends TimeGraphBaseControl
 
         // draw selection lines
         if (fDragState != DRAG_SELECTION) {
-            gc.setForeground(getColorScheme().getColor(TimeGraphColorScheme.SELECTED_TIME));
+            int color = TimeGraphColorScheme.SELECTED_TIME;
+
+            if (fUsePinnedSelectionColor) {
+                color = TimeGraphColorScheme.SELECTED_TIME_PINNED;
+            }
+
+            gc.setForeground(getColorScheme().getColor(color));
+
             if (x0 >= nameSpace && x0 < bounds.x + bounds.width) {
                 gc.drawLine(x0, bounds.y, x0, bounds.y + bounds.height);
             }
@@ -2712,7 +2744,7 @@ public class TimeGraphControl extends TimeGraphBaseControl
                 return;
             }
         }
-        if (1 == e.button && ((e.stateMask & SWT.MODIFIER_MASK) == 0 || (e.stateMask & SWT.MODIFIER_MASK) == SWT.SHIFT)) {
+        if ((1 == e.button && ((e.stateMask & SWT.MODIFIER_MASK) == 0 || (e.stateMask & SWT.MODIFIER_MASK) == SWT.SHIFT))) {
             int nameSpace = fTimeProvider.getNameSpace();
             idx = getItemIndexAtY(e.y);
             if (idx >= 0) {
@@ -2727,50 +2759,53 @@ public class TimeGraphControl extends TimeGraphBaseControl
                 selectItem(idx, false); // clear selection
                 fireSelectionChanged();
             }
-            long hitTime = getTimeAtX(e.x);
-            if (hitTime >= 0) {
-                setCapture(true);
 
-                fDragState = DRAG_SELECTION;
-                fDragBeginMarker = false;
-                fDragButton = e.button;
-                fDragX = e.x;
-                fDragX0 = fDragX;
-                fDragTime0 = getTimeAtX(fDragX0);
-                long selectionBegin = fTimeProvider.getSelectionBegin();
-                long selectionEnd = fTimeProvider.getSelectionEnd();
-                int xBegin = getXForTime(selectionBegin);
-                int xEnd = getXForTime(selectionEnd);
-                if ((e.stateMask & SWT.MODIFIER_MASK) == SWT.SHIFT) {
-                    long time = getTimeAtX(e.x);
-                    if (Math.abs(time - selectionBegin) < Math.abs(time - selectionEnd)) {
-                        fDragBeginMarker = true;
-                        fDragX = xEnd;
-                        fDragX0 = e.x;
-                        fDragTime0 = selectionEnd;
+            if (fTimeRangeSelectionEnabled) {
+                long hitTime = getTimeAtX(e.x);
+                if (hitTime >= 0) {
+                    setCapture(true);
+
+                    fDragState = DRAG_SELECTION;
+                    fDragBeginMarker = false;
+                    fDragButton = e.button;
+                    fDragX = e.x;
+                    fDragX0 = fDragX;
+                    fDragTime0 = getTimeAtX(fDragX0);
+                    long selectionBegin = fTimeProvider.getSelectionBegin();
+                    long selectionEnd = fTimeProvider.getSelectionEnd();
+                    int xBegin = getXForTime(selectionBegin);
+                    int xEnd = getXForTime(selectionEnd);
+                    if ((e.stateMask & SWT.MODIFIER_MASK) == SWT.SHIFT) {
+                        long time = getTimeAtX(e.x);
+                        if (Math.abs(time - selectionBegin) < Math.abs(time - selectionEnd)) {
+                            fDragBeginMarker = true;
+                            fDragX = xEnd;
+                            fDragX0 = e.x;
+                            fDragTime0 = selectionEnd;
+                        } else {
+                            fDragX0 = xBegin;
+                            fDragTime0 = selectionBegin;
+                        }
                     } else {
-                        fDragX0 = xBegin;
-                        fDragTime0 = selectionBegin;
+                        long time = getTimeAtX(e.x);
+                        if (Math.abs(e.x - xBegin) < SNAP_WIDTH && Math.abs(time - selectionBegin) <= Math.abs(time - selectionEnd)) {
+                            fDragBeginMarker = true;
+                            fDragX = xEnd;
+                            fDragX0 = e.x;
+                            fDragTime0 = selectionEnd;
+                        } else if (Math.abs(e.x - xEnd) < SNAP_WIDTH && Math.abs(time - selectionEnd) <= Math.abs(time - selectionBegin)) {
+                            fDragX0 = xBegin;
+                            fDragTime0 = selectionBegin;
+                        }
                     }
-                } else {
-                    long time = getTimeAtX(e.x);
-                    if (Math.abs(e.x - xBegin) < SNAP_WIDTH && Math.abs(time - selectionBegin) <= Math.abs(time - selectionEnd)) {
-                        fDragBeginMarker = true;
-                        fDragX = xEnd;
-                        fDragX0 = e.x;
-                        fDragTime0 = selectionEnd;
-                    } else if (Math.abs(e.x - xEnd) < SNAP_WIDTH && Math.abs(time - selectionEnd) <= Math.abs(time - selectionBegin)) {
-                        fDragX0 = xBegin;
-                        fDragTime0 = selectionBegin;
-                    }
+                    fTime0bak = fTimeProvider.getTime0();
+                    fTime1bak = fTimeProvider.getTime1();
+                    redraw();
+                    updateCursor(e.x, e.stateMask);
+                    fTimeGraphScale.setDragRange(fDragX0, fDragX);
                 }
-                fTime0bak = fTimeProvider.getTime0();
-                fTime1bak = fTimeProvider.getTime1();
-                redraw();
-                updateCursor(e.x, e.stateMask);
-                fTimeGraphScale.setDragRange(fDragX0, fDragX);
             }
-        } else if (2 == e.button || (1 == e.button && (e.stateMask & SWT.MODIFIER_MASK) == SWT.CTRL)) {
+        } else if ((2 == e.button || (1 == e.button && (e.stateMask & SWT.MODIFIER_MASK) == SWT.CTRL)) && fGrabAndPanEnabled) {
             long hitTime = getTimeAtX(e.x);
             if (hitTime > 0) {
                 setCapture(true);
@@ -2782,7 +2817,7 @@ public class TimeGraphControl extends TimeGraphBaseControl
                 fTime1bak = fTimeProvider.getTime1();
                 updateCursor(e.x, e.stateMask);
             }
-        } else if (3 == e.button) {
+        } else if (3 == e.button && fSelectionZoomEnabled) {
             if (e.x >= fTimeProvider.getNameSpace()) {
                 setCapture(true);
                 fDragX = Math.min(Math.max(e.x, fTimeProvider.getNameSpace()), getSize().x - RIGHT_MARGIN);
@@ -3436,5 +3471,30 @@ public class TimeGraphControl extends TimeGraphBaseControl
 
     private boolean isInDragZoomMargin() {
         return (Math.abs(fDragX - fDragX0) < DRAG_MARGIN);
+    }
+
+    /**
+     * Set the pin state
+     *
+     * @param state
+     *            True -> pinned
+     *            False -> not pinned
+     * @since 2.2
+     */
+    @Override
+    public synchronized void setPinned(boolean state) {
+        super.setPinned(state);
+
+        fUsePinnedSelectionColor = state;
+
+        boolean enabled = !state;
+
+        fPrevEventEnabled = enabled;
+        fNextEventEnabled = enabled;
+        fGrabAndPanEnabled = enabled;
+        fSelectionZoomEnabled = enabled;
+        fHorizontalZoomEnabled = enabled;
+        fHorizontalScrollEnabled = enabled;
+        fTimeRangeSelectionEnabled = enabled;
     }
 }
