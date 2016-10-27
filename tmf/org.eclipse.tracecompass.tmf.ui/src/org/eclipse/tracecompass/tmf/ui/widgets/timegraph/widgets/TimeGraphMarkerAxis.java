@@ -168,6 +168,10 @@ public class TimeGraphMarkerAxis extends TimeGraphBaseControl {
             return;
         }
         if (e.x < bounds.x + nameSpace) {
+            if (getPinState()) {
+                /* Do not allow visible toggle of bookmarks category when pinned */
+                return;
+            }
             String category = getHiddenCategoryForEvent(e, bounds);
             if (category != null) {
                 for (IMarkerAxisListener listener : fListeners) {
@@ -176,9 +180,12 @@ public class TimeGraphMarkerAxis extends TimeGraphBaseControl {
             }
             return;
         }
-        IMarkerEvent marker = getMarkerForEvent(e);
-        if (marker != null) {
-            fTimeProvider.setSelectionRangeNotify(marker.getTime(), marker.getTime() + marker.getDuration(), false);
+        if (!getPinState()) {
+            /* Allow marker selection when not pinned */
+            IMarkerEvent marker = getMarkerForEvent(e);
+            if (marker != null) {
+                fTimeProvider.setSelectionRangeNotify(marker.getTime(), marker.getTime() + marker.getDuration(), false);
+            }
         }
     }
 
