@@ -49,6 +49,10 @@ public abstract class TimeGraphBaseControl extends Canvas implements PaintListen
     /** Font size */
     private int fFontHeight = 0;
 
+    /** Pin state */
+    private boolean fPinState = false;
+
+
     /**
      * Basic constructor. Uses a default style value
      *
@@ -111,6 +115,27 @@ public abstract class TimeGraphBaseControl extends Canvas implements PaintListen
      */
     public int getFontHeight() {
         return fFontHeight;
+    }
+
+    /**
+     * Set the pin state
+     *
+     * @param state
+     *            The pin state
+     * @since 2.2
+     */
+    public void setPinState(boolean state) {
+        fPinState = state;
+    }
+
+    /**
+     * Retrieve the current pin state
+     *
+     * @return The pin state
+     * @since 2.2
+     */
+    public boolean getPinState() {
+        return fPinState;
     }
 
     abstract void paint(Rectangle bound, PaintEvent e);
