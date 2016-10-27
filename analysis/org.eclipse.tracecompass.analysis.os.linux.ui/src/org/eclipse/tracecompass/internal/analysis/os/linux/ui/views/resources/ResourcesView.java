@@ -28,6 +28,7 @@ import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.swt.widgets.Composite;
 import org.eclipse.tracecompass.analysis.os.linux.core.kernel.KernelAnalysisModule;
 import org.eclipse.tracecompass.analysis.os.linux.core.signals.TmfCpuSelectedSignal;
 import org.eclipse.tracecompass.internal.analysis.os.linux.core.kernel.Attributes;
@@ -37,11 +38,14 @@ import org.eclipse.tracecompass.internal.analysis.os.linux.ui.actions.UnfollowCp
 import org.eclipse.tracecompass.internal.analysis.os.linux.ui.views.resources.ResourcesEntry.Type;
 import org.eclipse.tracecompass.statesystem.core.ITmfStateSystem;
 import org.eclipse.tracecompass.statesystem.core.interval.ITmfStateInterval;
+import org.eclipse.tracecompass.tmf.core.signal.TmfSignal;
 import org.eclipse.tracecompass.tmf.core.signal.TmfSignalHandler;
+import org.eclipse.tracecompass.tmf.core.signal.TmfSignalManager;
 import org.eclipse.tracecompass.tmf.core.statesystem.TmfStateSystemAnalysisModule;
 import org.eclipse.tracecompass.tmf.core.trace.ITmfTrace;
 import org.eclipse.tracecompass.tmf.core.trace.TmfTraceContext;
 import org.eclipse.tracecompass.tmf.core.trace.TmfTraceManager;
+import org.eclipse.tracecompass.tmf.core.trace.experiment.TmfExperiment;
 import org.eclipse.tracecompass.tmf.ui.views.timegraph.AbstractStateSystemTimeGraphView;
 import org.eclipse.tracecompass.tmf.ui.widgets.timegraph.model.ITimeEvent;
 import org.eclipse.tracecompass.tmf.ui.widgets.timegraph.model.ITimeGraphEntry;
@@ -68,6 +72,11 @@ public class ResourcesView extends AbstractStateSystemTimeGraphView {
 
     // Timeout between updates in the build thread in ms
     private static final long BUILD_UPDATE_TIMEOUT = 500;
+
+    /** The tab label */
+    private String fOriginalTabLabel;
+
+    private boolean fPinState = false;
 
     // ------------------------------------------------------------------------
     // Constructors
@@ -113,10 +122,12 @@ public class ResourcesView extends AbstractStateSystemTimeGraphView {
                     TmfTraceContext ctx = TmfTraceManager.getInstance().getCurrentTraceContext();
                     Integer data = (Integer) ctx.getData(RESOURCES_FOLLOW_CPU);
                     int cpu = data != null ? data.intValue() : -1;
-                    if (cpu >= 0) {
-                        menuManager.add(new UnfollowCpuAction(ResourcesView.this, resourcesEntry.getId(), resourcesEntry.getTrace()));
-                    } else {
-                        menuManager.add(new FollowCpuAction(ResourcesView.this, resourcesEntry.getId(), resourcesEntry.getTrace()));
+                    if (!fPinState) {
+                        if (cpu >= 0) {
+                            menuManager.add(new UnfollowCpuAction(ResourcesView.this, resourcesEntry.getId(), resourcesEntry.getTrace()));
+                        } else {
+                            menuManager.add(new FollowCpuAction(ResourcesView.this, resourcesEntry.getId(), resourcesEntry.getTrace()));
+                        }
                     }
                 }
             }
@@ -133,6 +144,12 @@ public class ResourcesView extends AbstractStateSystemTimeGraphView {
             return ""; //$NON-NLS-1$
         }
 
+    }
+
+    @Override
+    public void createPartControl(Composite parent) {
+        super.createPartControl(parent);
+        fOriginalTabLabel = getPartName();
     }
 
     // ------------------------------------------------------------------------
@@ -439,13 +456,39 @@ public class ResourcesView extends AbstractStateSystemTimeGraphView {
         TmfTraceContext ctx = TmfTraceManager.getInstance().getCurrentTraceContext();
         ctx.setData(RESOURCES_FOLLOW_CPU, data);
     }
-    @Override
-    protected void actionsPin(boolean pinState) {
-        //TODO: For now do nothing
-    }
 
     @Override
-    protected void contributePinActionToToolBar() {
-        //TODO: Do not contribute Pin action since actionPin is not defined
+    protected void actionsPin(boolean pinState) {
+
+        fPinState = pinState;
+
+        if (fPinState) {
+            /* Ignore all outbound and inbound signal */
+            TmfSignalManager.addIgnoredOutboundSignal(this, TmfSignal.class);
+            TmfSignalManager.addIgnoredInboundSignal(this, TmfSignal.class);
+
+            String objectType = Messages.ControlFlowView_TraceLabel;
+            if (getTrace() instanceof TmfExperiment) {
+                objectType = Messages.ControlFlowView_ExperimentLabel;
+            }
+            setPartName(String.format("%s [%s][%s:%s]", fOriginalTabLabel, Messages.ControlFlowView_PinnedLabel, objectType, getTrace().getName())); //$NON-NLS-1$
+        } else {
+            TmfSignalManager.clearIgnoredInboundSignalList(this);
+            TmfSignalManager.clearIgnoredOutboundSignalList(this);
+
+            setPartName(fOriginalTabLabel);
+
+            loadTrace(TmfTraceManager.getInstance().getActiveTrace());
+        }
+
+        /* Propagate pin state to viewer */
+        if (getTimeGraphCombo() != null) {
+            getTimeGraphCombo().setPinState(fPinState);
+        } else {
+            getTimeGraphViewer().setPinState(fPinState);
+        }
+
+        redraw();
     }
+
 }
