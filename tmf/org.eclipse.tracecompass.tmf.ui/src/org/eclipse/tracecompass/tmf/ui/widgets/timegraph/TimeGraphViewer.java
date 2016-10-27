@@ -68,6 +68,7 @@ import org.eclipse.tracecompass.internal.tmf.ui.ITmfImageConstants;
 import org.eclipse.tracecompass.internal.tmf.ui.Messages;
 import org.eclipse.tracecompass.internal.tmf.ui.dialogs.AddBookmarkDialog;
 import org.eclipse.tracecompass.tmf.ui.signal.TmfTimeViewAlignmentInfo;
+import org.eclipse.tracecompass.tmf.ui.viewers.TmfViewer;
 import org.eclipse.tracecompass.tmf.ui.views.ITmfTimeAligned;
 import org.eclipse.tracecompass.tmf.ui.widgets.timegraph.dialogs.ShowFilterDialogAction;
 import org.eclipse.tracecompass.tmf.ui.widgets.timegraph.dialogs.TimeGraphLegend;
@@ -93,7 +94,7 @@ import org.eclipse.ui.PlatformUI;
  *
  * @author Patrick Tasse, and others
  */
-public class TimeGraphViewer implements ITimeDataProvider, IMarkerAxisListener, SelectionListener {
+public class TimeGraphViewer extends TmfViewer implements ITimeDataProvider, IMarkerAxisListener, SelectionListener {
 
     /** Constant indicating that all levels of the time graph should be expanded */
     public static final int ALL_LEVELS = AbstractTreeViewer.ALL_LEVELS;
@@ -557,6 +558,7 @@ public class TimeGraphViewer implements ITimeDataProvider, IMarkerAxisListener, 
     /**
      * Refresh the view
      */
+    @Override
     public void refresh() {
         ITimeGraphEntry[] input = fTimeGraphContentProvider.getElements(fInputElement);
         setTimeRange(input);
@@ -734,6 +736,7 @@ public class TimeGraphViewer implements ITimeDataProvider, IMarkerAxisListener, 
     /**
      * Dispose the time graph viewer.
      */
+    @Override
     public void dispose() {
         fDataViewer.dispose();
     }
@@ -1724,6 +1727,7 @@ public class TimeGraphViewer implements ITimeDataProvider, IMarkerAxisListener, 
      *
      * @return the SWT control which displays this viewer's content
      */
+    @Override
     public Control getControl() {
         return fDataViewer;
     }
