@@ -541,7 +541,7 @@ public class TimeGraphScale extends TimeGraphBaseControl implements
     @Override
     public void mouseDown(MouseEvent e) {
         getParent().setFocus();
-        if (fDragState == NO_BUTTON && null != fTimeProvider) {
+        if (fDragState == NO_BUTTON && null != fTimeProvider && !getPinState()) {
             int x = e.x - fTimeProvider.getNameSpace();
             if (LEFT_BUTTON == e.button && x > 0) {
                 setCapture(true);
@@ -599,7 +599,11 @@ public class TimeGraphScale extends TimeGraphBaseControl implements
 
     @Override
     public void mouseDoubleClick(MouseEvent e) {
-        if (e.button == 1 && null != fTimeProvider && fTimeProvider.getTime0() != fTimeProvider.getTime1() && (e.stateMask & SWT.BUTTON_MASK) == 0) {
+        if (e.button == 1
+                && null != fTimeProvider
+                && fTimeProvider.getTime0() != fTimeProvider.getTime1()
+                && (e.stateMask & SWT.BUTTON_MASK) == 0
+                && !getPinState()) {
             fTimeProvider.resetStartFinishTime();
             fTime0bak = fTimeProvider.getTime0();
             fTime1bak = fTimeProvider.getTime1();
