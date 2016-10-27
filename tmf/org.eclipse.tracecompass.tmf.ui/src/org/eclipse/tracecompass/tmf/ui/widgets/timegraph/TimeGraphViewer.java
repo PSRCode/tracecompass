@@ -173,7 +173,8 @@ public class TimeGraphViewer extends TmfViewer implements ITimeDataProvider, IMa
     private MenuManager fMarkersMenu;
 
     /** The list of bookmarks */
-    private final List<IMarkerEvent> fBookmarks = new ArrayList<>();
+    private final List<IMarkerEvent> fCurrentBookmark = new ArrayList<>();
+    private final List<IMarkerEvent> fSyncedBookmark = new ArrayList<>();
 
     /** The list of marker categories */
     private final List<String> fMarkerCategories = new ArrayList<>();
@@ -1412,9 +1413,16 @@ public class TimeGraphViewer extends TmfViewer implements ITimeDataProvider, IMa
      * @since 2.0
      */
     public void setBookmarks(List<IMarkerEvent> bookmarks) {
-        fBookmarks.clear();
+
+        fSyncedBookmark.clear();
+
         if (bookmarks != null) {
-            fBookmarks.addAll(bookmarks);
+            fSyncedBookmark.addAll(bookmarks);
+        }
+
+        if (!fPinState) {
+            fCurrentBookmark.clear();
+            fCurrentBookmark.addAll(fSyncedBookmark);
         }
         updateMarkerList();
         updateMarkerActions();
@@ -1427,7 +1435,7 @@ public class TimeGraphViewer extends TmfViewer implements ITimeDataProvider, IMa
      * @since 2.0
      */
     public List<IMarkerEvent> getBookmarks() {
-        return Collections.unmodifiableList(fBookmarks);
+        return Collections.unmodifiableList(fCurrentBookmark);
     }
 
     /**
@@ -2266,14 +2274,14 @@ public class TimeGraphViewer extends TmfViewer implements ITimeDataProvider, IMa
                             final String label = dialog.getValue();
                             final RGBA rgba = dialog.getColorValue();
                             IMarkerEvent bookmark = new MarkerEvent(null, time, duration, IMarkerEvent.BOOKMARKS, rgba, label, true);
-                            fBookmarks.add(bookmark);
+                            fCurrentBookmark.add(bookmark);
                             updateMarkerList();
                             updateMarkerActions();
                             getControl().redraw();
                             fireBookmarkAdded(bookmark);
                         }
                     } else {
-                        fBookmarks.remove(selectedBookmark);
+                        fCurrentBookmark.remove(selectedBookmark);
                         updateMarkerList();
                         updateMarkerActions();
                         getControl().redraw();
@@ -2501,7 +2509,7 @@ public class TimeGraphViewer extends TmfViewer implements ITimeDataProvider, IMa
     private IMarkerEvent getBookmarkAtSelection() {
         final long time = Math.min(fSelectionBegin, fSelectionEnd);
         final long duration = Math.max(fSelectionBegin, fSelectionEnd) - time;
-        for (IMarkerEvent bookmark : fBookmarks) {
+        for (IMarkerEvent bookmark : fCurrentBookmark) {
             if (bookmark.getTime() == time && bookmark.getDuration() == duration) {
                 return bookmark;
             }
@@ -2510,7 +2518,7 @@ public class TimeGraphViewer extends TmfViewer implements ITimeDataProvider, IMa
     }
 
     private void updateMarkerActions() {
-        boolean enabled = fTime0Bound != SWT.DEFAULT || fTime1Bound != SWT.DEFAULT;
+        boolean enabled = (fTime0Bound != SWT.DEFAULT || fTime1Bound != SWT.DEFAULT) && !fPinState;
         if (fToggleBookmarkAction != null) {
             if (getBookmarkAtSelection() != null) {
                 fToggleBookmarkAction.setText(Messages.TmfTimeGraphViewer_BookmarkActionRemoveText);
@@ -2543,7 +2551,7 @@ public class TimeGraphViewer extends TmfViewer implements ITimeDataProvider, IMa
             }
         }
         if (!fHiddenMarkerCategories.contains(IMarkerEvent.BOOKMARKS)) {
-            markers.addAll(fBookmarks);
+            markers.addAll(fCurrentBookmark);
         }
         Collections.sort(markers, new MarkerComparator());
         fTimeGraphCtrl.setMarkers(markers);
@@ -2710,6 +2718,73 @@ public class TimeGraphViewer extends TmfViewer implements ITimeDataProvider, IMa
         int marginSize = size - alignmentWidth - offset;
         layout.marginRight = Math.max(0, marginSize);
         fTimeAlignedComposite.layout();
+    }
+
+    @Override
+    public void setPinState(boolean state) {
+        super.setPinState(state);
+        boolean enabled = !state;
+
+        fTimeGraphCtrl.setPinState(state);
+        fTimeScaleCtrl.setPinState(state);
+        fMarkerAxisCtrl.setPinState(state);
+
+        fHorizontalScrollBar.setEnabled(enabled);
+        fHorizontalScrollBar.setVisible(enabled);
+
+        fMouseWheelListeners.setHorizontalScrollEnabled(enabled);
+        fMouseWheelListeners.setZoomEnabled(enabled);
+
+        fKeyListeners.setAllEnabled(enabled);
+
+        fMarkersMenu.setVisible(enabled);
+
+        if (!state) {
+            fCurrentBookmark.clear();
+            fCurrentBookmark.addAll(fSyncedBookmark);
+        }
+
+        if (fResetScaleAction != null) {
+            fResetScaleAction.setEnabled(enabled);
+        }
+        if (fShowLegendAction != null) {
+            fShowLegendAction.setEnabled(enabled);
+        }
+        if (fNextEventAction != null) {
+            fNextEventAction.setEnabled(enabled);
+        }
+        if (fPrevEventAction != null) {
+            fPrevEventAction.setEnabled(enabled);
+        }
+        if (fNextItemAction != null) {
+            fNextItemAction.setEnabled(enabled);
+        }
+        if (fPreviousItemAction != null) {
+            fPreviousItemAction.setEnabled(enabled);
+        }
+        if (fZoomInAction != null) {
+            fZoomInAction.setEnabled(enabled);
+        }
+        if (fZoomOutAction != null) {
+            fZoomOutAction.setEnabled(enabled);
+        }
+        if (fHideArrowsAction != null) {
+            fHideArrowsAction.setEnabled(enabled);
+        }
+        if (fFollowArrowFwdAction != null) {
+            fFollowArrowFwdAction.setEnabled(enabled);
+        }
+        if (fFollowArrowBwdAction != null) {
+            fFollowArrowBwdAction.setEnabled(enabled);
+        }
+        if (fShowFilterDialogAction != null) {
+            fShowFilterDialogAction.setEnabled(enabled);
+        }
+        if (fToggleBookmarkAction != null) {
+            fToggleBookmarkAction.setEnabled(enabled);
+        }
+
+        updateMarkerActions();
     }
 
 }
