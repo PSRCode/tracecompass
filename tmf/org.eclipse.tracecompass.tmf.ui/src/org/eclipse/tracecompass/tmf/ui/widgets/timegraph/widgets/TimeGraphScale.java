@@ -124,6 +124,8 @@ public class TimeGraphScale extends TimeGraphBaseControl implements
     private int fHeight;
     private List<Integer> fTickList = new ArrayList<>();
 
+    private boolean fIsUserInteractionEnabled = true;
+
     /**
      * Standard constructor
      *
@@ -541,7 +543,7 @@ public class TimeGraphScale extends TimeGraphBaseControl implements
     @Override
     public void mouseDown(MouseEvent e) {
         getParent().setFocus();
-        if (fDragState == NO_BUTTON && null != fTimeProvider) {
+        if (fDragState == NO_BUTTON && null != fTimeProvider && fIsUserInteractionEnabled) {
             int x = e.x - fTimeProvider.getNameSpace();
             if (LEFT_BUTTON == e.button && x > 0) {
                 setCapture(true);
@@ -599,7 +601,11 @@ public class TimeGraphScale extends TimeGraphBaseControl implements
 
     @Override
     public void mouseDoubleClick(MouseEvent e) {
-        if (e.button == 1 && null != fTimeProvider && fTimeProvider.getTime0() != fTimeProvider.getTime1() && (e.stateMask & SWT.BUTTON_MASK) == 0) {
+        if (e.button == 1
+                && null != fTimeProvider
+                && fTimeProvider.getTime0() != fTimeProvider.getTime1()
+                && (e.stateMask & SWT.BUTTON_MASK) == 0
+                && fIsUserInteractionEnabled) {
             fTimeProvider.resetStartFinishTime();
             fTime0bak = fTimeProvider.getTime0();
             fTime1bak = fTimeProvider.getTime1();
@@ -617,6 +623,13 @@ public class TimeGraphScale extends TimeGraphBaseControl implements
         TimeDraw.updateTimeZone();
         Utils.updateTimeZone();
         redraw();
+    }
+
+    @Override
+    public synchronized void setPinned(boolean pinned) {
+        /* When pinned disable user interaction */
+        boolean enabled = !pinned;
+        fIsUserInteractionEnabled = enabled;
     }
 }
 
