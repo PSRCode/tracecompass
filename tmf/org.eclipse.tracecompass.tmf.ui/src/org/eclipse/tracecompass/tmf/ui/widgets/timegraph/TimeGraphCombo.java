@@ -1508,4 +1508,19 @@ public class TimeGraphCombo extends Composite {
         layout.marginRight = Math.max(0, marginSize);
         composite.layout();
     }
+
+    /**
+     * Set the pin state.
+     *
+     * @param pinned
+     *            The pin state
+     * @since 2.2
+     */
+    public void setPinned(boolean pinned) {
+        boolean enabled = !pinned;
+
+        fShowFilterDialogAction.setEnabled(enabled);
+
+        fTimeGraphViewer.setPinned(pinned);
+    }
 }
