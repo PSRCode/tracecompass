@@ -14,6 +14,8 @@ package org.eclipse.tracecompass.tmf.ui.viewers;
 
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.tracecompass.tmf.core.component.TmfComponent;
+import org.eclipse.tracecompass.tmf.core.signal.TmfSignal;
+import org.eclipse.tracecompass.tmf.core.signal.TmfSignalManager;
 
 /**
  * Abstract class that extends {@link TmfComponent} to be specific to viewers.
@@ -28,6 +30,13 @@ public abstract class TmfViewer extends TmfComponent implements ITmfViewer {
      * The parent composite that holds the viewer
      */
     protected Composite fParent;
+
+    /**
+     * The pin state.
+     * False by default.
+     * @since  2.2
+     */
+    protected boolean fPinState = false;
 
     /**
      * Default constructor. The viewer have to be initialize through the
@@ -83,4 +92,36 @@ public abstract class TmfViewer extends TmfComponent implements ITmfViewer {
     public Composite getParent() {
         return fParent;
     }
+
+    /**
+     * Set the pin state and perform the necessary action on the viewer. Viewers
+     * can override this function for more control over what is performed on a
+     * toggle of the pin state
+     *
+     * When in pinned state a viewer filter in-bound and out-bound signals.
+     *
+     * @param state
+     *            The pin state
+     * @since 2.2
+     */
+    public void setPinState(boolean state) {
+        fPinState = state;
+        if (fPinState) {
+            TmfSignalManager.addIgnoredInboundSignal(this, TmfSignal.class);
+            TmfSignalManager.addIgnoredOutboundSignal(this, TmfSignal.class);
+        } else {
+            TmfSignalManager.clearIgnoredInboundSignalList(this);
+            TmfSignalManager.clearIgnoredOutboundSignalList(this);
+        }
+    }
+
+    /**
+     * @return the pin state of this viewer
+     * @since 2.2
+     */
+    public boolean getPinState() {
+        return fPinState;
+    }
+
+
 }
