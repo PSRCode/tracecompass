@@ -347,6 +347,10 @@ public abstract class AbstractTimeGraphView extends TmfView implements ITmfTimeA
 
         void selectAndReveal(@NonNull ITimeGraphEntry selection);
 
+        boolean getPinState();
+
+        void setPinState(boolean state);
+
     }
 
     private class TimeGraphViewerWrapper implements ITimeGraphWrapper {
@@ -489,6 +493,16 @@ public abstract class AbstractTimeGraphView extends TmfView implements ITmfTimeA
         @Override
         public void selectAndReveal(@NonNull ITimeGraphEntry selection) {
             viewer.selectAndReveal(selection);
+        }
+
+        @Override
+        public boolean getPinState() {
+            return viewer.getPinState();
+        }
+
+        @Override
+        public void setPinState(boolean state) {
+            viewer.setPinState(state);
         }
     }
 
@@ -640,6 +654,16 @@ public abstract class AbstractTimeGraphView extends TmfView implements ITmfTimeA
         @Override
         public void selectAndReveal(@NonNull ITimeGraphEntry selection) {
             combo.selectAndReveal(selection);
+        }
+
+        @Override
+        public boolean getPinState() {
+            return combo.getPinState();
+        }
+
+        @Override
+        public void setPinState(boolean state) {
+            combo.setPinState(state);
         }
     }
 
