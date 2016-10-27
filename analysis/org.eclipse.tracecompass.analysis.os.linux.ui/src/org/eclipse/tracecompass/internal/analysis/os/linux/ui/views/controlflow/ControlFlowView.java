@@ -63,6 +63,7 @@ import org.eclipse.tracecompass.statesystem.core.interval.ITmfStateInterval;
 import org.eclipse.tracecompass.statesystem.core.statevalue.ITmfStateValue;
 import org.eclipse.tracecompass.tmf.core.event.ITmfEvent;
 import org.eclipse.tracecompass.tmf.core.signal.TmfSelectionRangeUpdatedSignal;
+import org.eclipse.tracecompass.tmf.core.signal.TmfSignal;
 import org.eclipse.tracecompass.tmf.core.signal.TmfSignalHandler;
 import org.eclipse.tracecompass.tmf.core.signal.TmfSignalManager;
 import org.eclipse.tracecompass.tmf.core.signal.TmfTraceSelectedSignal;
@@ -72,6 +73,7 @@ import org.eclipse.tracecompass.tmf.core.trace.ITmfContext;
 import org.eclipse.tracecompass.tmf.core.trace.ITmfTrace;
 import org.eclipse.tracecompass.tmf.core.trace.TmfTraceManager;
 import org.eclipse.tracecompass.tmf.core.trace.TmfTraceUtils;
+import org.eclipse.tracecompass.tmf.core.trace.experiment.TmfExperiment;
 import org.eclipse.tracecompass.tmf.core.util.Pair;
 import org.eclipse.tracecompass.tmf.ui.views.timegraph.AbstractStateSystemTimeGraphView;
 import org.eclipse.tracecompass.tmf.ui.widgets.timegraph.model.ILinkEvent;
@@ -111,6 +113,7 @@ public class ControlFlowView extends AbstractStateSystemTimeGraphView {
     private static final String BIRTH_TIME_COLUMN = Messages.ControlFlowView_birthTimeColumn;
     private static final String INVISIBLE_COLUMN = Messages.ControlFlowView_invisibleColumn;
     private Action fOptimizationAction;
+    private String fOriginalTabLabel;
 
     private static final String NEXT_EVENT_ICON_PATH = "icons/elcl16/shift_r_edit.gif"; //$NON-NLS-1$
     private static final String PREV_EVENT_ICON_PATH = "icons/elcl16/shift_l_edit.gif"; //$NON-NLS-1$
@@ -165,10 +168,11 @@ public class ControlFlowView extends AbstractStateSystemTimeGraphView {
 
     private MenuManager fThreadPresentationMenu;
     private IAction fFlatAction;
-
     private IAction fHierarchicalAction;
     private IAction fPreviousEventAction;
     private IAction fNextEventAction;
+
+    private boolean fPinState = false;
 
     // ------------------------------------------------------------------------
     // Constructors
@@ -195,6 +199,7 @@ public class ControlFlowView extends AbstractStateSystemTimeGraphView {
         // add "Uncheck inactive" Button to TimeGraphFilterDialog
         super.getTimeGraphCombo().addTimeGraphFilterUncheckInactiveButton(
                 new ControlFlowCheckActiveProvider(Messages.ControlFlowView_uncheckInactiveLabel, Messages.ControlFlowView_uncheckInactiveToolTip));
+        fOriginalTabLabel = getPartName();
     }
 
     /**
@@ -207,7 +212,9 @@ public class ControlFlowView extends AbstractStateSystemTimeGraphView {
             StructuredSelection sSel = (StructuredSelection) selection;
             if (sSel.getFirstElement() instanceof ControlFlowEntry) {
                 ControlFlowEntry entry = (ControlFlowEntry) sSel.getFirstElement();
-                menuManager.add(new FollowThreadAction(ControlFlowView.this, entry.getName(), entry.getThreadId(), entry.getTrace()));
+                if (!fPinState) {
+                    menuManager.add(new FollowThreadAction(ControlFlowView.this, entry.getName(), entry.getThreadId(), entry.getTrace()));
+                }
             }
         }
     }
@@ -1059,12 +1066,45 @@ public class ControlFlowView extends AbstractStateSystemTimeGraphView {
 
     @Override
     protected void actionsPin(boolean pinState) {
-        //TODO: For now do nothing
-    }
 
-    @Override
-    protected void contributePinActionToToolBar() {
-        //TODO: Do not contribute Pin action since actionPin is not defined
-    }
+        fPinState = pinState;
+        boolean enabled = !pinState;
 
+
+        if (pinState) {
+            /* Ignore all outbound and inbound signal */
+            TmfSignalManager.addIgnoredOutboundSignal(this, TmfSignal.class);
+            TmfSignalManager.addIgnoredInboundSignal(this, TmfSignal.class);
+
+            String objectType = Messages.ControlFlowView_TraceLabel;
+            if (getTrace() instanceof TmfExperiment) {
+                objectType = Messages.ControlFlowView_ExperimentLabel;
+            }
+            setPartName(String.format("%s [%s][%s:%s]", fOriginalTabLabel, Messages.ControlFlowView_PinnedLabel, objectType, getTrace().getName())); //$NON-NLS-1$
+        } else {
+            TmfSignalManager.clearIgnoredInboundSignalList(this);
+            TmfSignalManager.clearIgnoredOutboundSignalList(this);
+
+            setPartName(fOriginalTabLabel);
+
+            loadTrace(TmfTraceManager.getInstance().getActiveTrace());
+        }
+
+        fFlatAction.setEnabled(enabled);
+        fHierarchicalAction.setEnabled(enabled);
+        fOptimizationAction.setEnabled(enabled);
+        fPreviousEventAction.setEnabled(enabled);
+        fNextEventAction.setEnabled(enabled);
+        fThreadPresentationMenu.setVisible(enabled);
+        fThreadPresentationMenu.markDirty();
+
+        /* Propagate pin state to viewer */
+        if (getTimeGraphCombo() != null) {
+            getTimeGraphCombo().setPinState(pinState);
+        } else {
+            getTimeGraphViewer().setPinState(pinState);
+        }
+
+        redraw();
+    }
 }
