@@ -163,6 +163,7 @@ public class ControlFlowView extends AbstractStateSystemTimeGraphView {
 
     private final Set<ITmfTrace> fFlatTraces = new HashSet<>();
 
+    private MenuManager fThreadPresentationMenu;
     private IAction fFlatAction;
 
     private IAction fHierarchicalAction;
@@ -266,13 +267,13 @@ public class ControlFlowView extends AbstractStateSystemTimeGraphView {
     @Override
     protected void fillLocalMenu(IMenuManager manager) {
         super.fillLocalMenu(manager);
-        final MenuManager item = new MenuManager(Messages.ControlFlowView_threadPresentation);
+        fThreadPresentationMenu = new MenuManager(Messages.ControlFlowView_threadPresentation);
         fFlatAction = createFlatAction();
-        item.add(fFlatAction);
+        fThreadPresentationMenu.add(fFlatAction);
 
         fHierarchicalAction = createHierarchicalAction();
-        item.add(fHierarchicalAction);
-        manager.add(item);
+        fThreadPresentationMenu.add(fHierarchicalAction);
+        manager.add(fThreadPresentationMenu);
 
     }
 
