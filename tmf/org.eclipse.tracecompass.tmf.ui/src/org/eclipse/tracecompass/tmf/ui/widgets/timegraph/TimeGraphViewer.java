@@ -190,6 +190,171 @@ public class TimeGraphViewer implements ITimeDataProvider, IMarkerAxisListener, 
 
     private Composite fTimeAlignedComposite;
 
+    private final MouseWheelListeners fMouseWheelListeners = new MouseWheelListeners();
+    private final KeyListeners fKeyListeners = new KeyListeners();
+
+    private final class MouseWheelListeners {
+
+        private boolean fZoomEnabled;
+        private boolean fHorizontalScrollEnabled;
+
+        public MouseWheelListeners() {
+            super();
+            fZoomEnabled = true;
+            fHorizontalScrollEnabled = true;
+        }
+
+        public void setZoomEnabled(boolean enabled) {
+            fZoomEnabled = enabled;
+        }
+
+        public void setHorizontalScrollEnabled(boolean enabled) {
+            fHorizontalScrollEnabled = enabled;
+        }
+
+        public final MouseWheelListener fTimeGraphCtrlListener = new MouseWheelListener() {
+            @Override
+            public void mouseScrolled(MouseEvent e) {
+                if (e.count == 0) {
+                    return;
+                }
+                /*
+                 * On some platforms the mouse scroll event is sent to the
+                 * control that has focus even if it is not under the cursor.
+                 * Handle the event only if not over the time graph control.
+                 */
+                Point ctrlParentCoords = fTimeAlignedComposite.toControl(fTimeGraphCtrl.toDisplay(e.x, e.y));
+                Point scrollBarParentCoords = fDataViewer.toControl(fTimeGraphCtrl.toDisplay(e.x, e.y));
+                if (fTimeGraphCtrl.getBounds().contains(ctrlParentCoords)) {
+                    /* the time graph control handles the event */
+                    adjustVerticalScrollBar();
+                } else if (fTimeScaleCtrl.getBounds().contains(ctrlParentCoords)
+                        || fMarkerAxisCtrl.getBounds().contains(ctrlParentCoords)
+                        || fHorizontalScrollBar.getBounds().contains(scrollBarParentCoords)) {
+                    if (((e.stateMask & SWT.CTRL) != 0) && fZoomEnabled) {
+                        fTimeGraphCtrl.zoom(e.count > 0);
+                    } else if (fHorizontalScrollEnabled) {
+                        fTimeGraphCtrl.horizontalScroll(e.count > 0);
+                    }
+                } else {
+                    /* over the vertical scroll bar or outside of the viewer */
+                    setTopIndex(getTopIndex() - e.count);
+                }
+            }
+        };
+
+        public final MouseWheelListener fTimeScaleCtrlListener = new MouseWheelListener() {
+            @Override
+            public void mouseScrolled(MouseEvent e) {
+                if (e.count == 0) {
+                    return;
+                }
+                if (((e.stateMask & SWT.CTRL) != 0) && fZoomEnabled) {
+                    fTimeGraphCtrl.zoom(e.count > 0);
+                } else if (fHorizontalScrollEnabled) {
+                    fTimeGraphCtrl.horizontalScroll(e.count > 0);
+                }
+            }
+        };
+
+        public final MouseWheelListener fMarkerAxisCtrlListener = new MouseWheelListener() {
+            @Override
+            public void mouseScrolled(MouseEvent e) {
+                if (e.count == 0) {
+                    return;
+                }
+                if (((e.stateMask & SWT.CTRL) != 0) && fZoomEnabled) {
+                    fTimeGraphCtrl.zoom(e.count > 0);
+                } else if (fHorizontalScrollEnabled) {
+                    fTimeGraphCtrl.horizontalScroll(e.count > 0);
+                }
+            }
+        };
+
+        public final Listener fHorizontalScrollBarListener = new Listener() {
+            @Override
+            public void handleEvent(Event event) {
+                // don't handle the immediately following SWT.Selection event
+                event.doit = false;
+                if (event.count == 0) {
+                    return;
+                }
+                if (((event.stateMask & SWT.CTRL) != 0) && fZoomEnabled) {
+                    fTimeGraphCtrl.zoom(event.count > 0);
+                } else if (fHorizontalScrollEnabled) {
+                    fTimeGraphCtrl.horizontalScroll(event.count > 0);
+                }
+            }
+        };
+    }
+
+    private final class KeyListeners {
+
+        private boolean fExtendToNextMarkerEnabled;
+        private boolean fSelectNextMarkerEnabled;
+        private boolean fExtendToPrevMarkerEnabled;
+        private boolean fSelectPrevMarkerEnabled;
+
+        public KeyListeners() {
+            fExtendToNextMarkerEnabled = true;
+            fSelectNextMarkerEnabled = true;
+            fExtendToPrevMarkerEnabled = true;
+            fSelectPrevMarkerEnabled = true;
+        }
+
+        public void setExtendToNextMarkerEnabled(boolean enabled) {
+            fExtendToNextMarkerEnabled = enabled;
+        }
+
+        public void setExtendToPrevMarkerEnabled(boolean enabled) {
+            fExtendToPrevMarkerEnabled = enabled;
+        }
+
+        public void setSelectNextMarkerEnabled(boolean enabled) {
+            fSelectNextMarkerEnabled = enabled;
+        }
+
+        public void setSelectPrevMarkerEnabled(boolean enabled) {
+            fSelectPrevMarkerEnabled = enabled;
+        }
+
+        public void setAllEnabled(boolean enabled) {
+            setExtendToNextMarkerEnabled(enabled);
+            setSelectNextMarkerEnabled(enabled);
+            setExtendToPrevMarkerEnabled(enabled);
+            setSelectPrevMarkerEnabled(enabled);
+        }
+
+        public final KeyAdapter fTimeGraphCtrlKeyListener = new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                boolean validEvent = false;
+                if (e.keyCode == '.') {
+                    boolean extend = (e.stateMask & SWT.SHIFT) != 0;
+                    if (extend && fExtendToNextMarkerEnabled) {
+                        extendToNextMarker();
+                        validEvent = true;
+                    } else if (fSelectNextMarkerEnabled) {
+                        selectNextMarker();
+                        validEvent = true;
+                    }
+                } else if (e.keyCode == ',') {
+                    boolean extend = (e.stateMask & SWT.SHIFT) != 0;
+                    if (extend && fExtendToPrevMarkerEnabled) {
+                        extendToPrevMarker();
+                        validEvent = true;
+                    } else if (fSelectPrevMarkerEnabled) {
+                        selectPrevMarker();
+                        validEvent = true;
+                    }
+                }
+                if (validEvent) {
+                    adjustVerticalScrollBar();
+                }
+            }
+        };
+    }
+
     private class ListenerNotifier extends Thread {
         private static final long DELAY = 400L;
         private static final long POLLING_INTERVAL = 10L;
@@ -495,19 +660,7 @@ public class TimeGraphViewer implements ITimeDataProvider, IMarkerAxisListener, 
         fTimeScaleCtrl.setTimeProvider(fTimeDataProvider);
         fTimeScaleCtrl.setLayoutData(new GridData(SWT.FILL, SWT.DEFAULT, true, false));
         fTimeScaleCtrl.setHeight(fTimeScaleHeight);
-        fTimeScaleCtrl.addMouseWheelListener(new MouseWheelListener() {
-            @Override
-            public void mouseScrolled(MouseEvent e) {
-                if (e.count == 0) {
-                    return;
-                }
-                if ((e.stateMask & SWT.CTRL) != 0) {
-                    fTimeGraphCtrl.zoom(e.count > 0);
-                } else {
-                    fTimeGraphCtrl.horizontalScroll(e.count > 0);
-                }
-            }
-        });
+        fTimeScaleCtrl.addMouseWheelListener(fMouseWheelListeners.fTimeScaleCtrlListener);
 
         fTimeGraphCtrl = createTimeGraphControl(fTimeAlignedComposite, fColorScheme);
 
@@ -515,74 +668,13 @@ public class TimeGraphViewer implements ITimeDataProvider, IMarkerAxisListener, 
         fTimeGraphCtrl.setTimeGraphScale(fTimeScaleCtrl);
         fTimeGraphCtrl.addSelectionListener(this);
         fTimeGraphCtrl.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-        fTimeGraphCtrl.addMouseWheelListener(new MouseWheelListener() {
-            @Override
-            public void mouseScrolled(MouseEvent e) {
-                if (e.count == 0) {
-                    return;
-                }
-                /*
-                 * On some platforms the mouse scroll event is sent to the
-                 * control that has focus even if it is not under the cursor.
-                 * Handle the event only if not over the time graph control.
-                 */
-                Point ctrlParentCoords = fTimeAlignedComposite.toControl(fTimeGraphCtrl.toDisplay(e.x, e.y));
-                Point scrollBarParentCoords = fDataViewer.toControl(fTimeGraphCtrl.toDisplay(e.x, e.y));
-                if (fTimeGraphCtrl.getBounds().contains(ctrlParentCoords)) {
-                    /* the time graph control handles the event */
-                    adjustVerticalScrollBar();
-                } else if (fTimeScaleCtrl.getBounds().contains(ctrlParentCoords)
-                        || fMarkerAxisCtrl.getBounds().contains(ctrlParentCoords)
-                        || fHorizontalScrollBar.getBounds().contains(scrollBarParentCoords)) {
-                    if ((e.stateMask & SWT.CTRL) != 0) {
-                        fTimeGraphCtrl.zoom(e.count > 0);
-                    } else {
-                        fTimeGraphCtrl.horizontalScroll(e.count > 0);
-                    }
-                } else {
-                    /* over the vertical scroll bar or outside of the viewer */
-                    setTopIndex(getTopIndex() - e.count);
-                }
-            }
-        });
-        fTimeGraphCtrl.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                if (e.keyCode == '.') {
-                    boolean extend = (e.stateMask & SWT.SHIFT) != 0;
-                    if (extend) {
-                        extendToNextMarker();
-                    } else {
-                        selectNextMarker();
-                    }
-                } else if (e.keyCode == ',') {
-                    boolean extend = (e.stateMask & SWT.SHIFT) != 0;
-                    if (extend) {
-                        extendToPrevMarker();
-                    } else {
-                        selectPrevMarker();
-                    }
-                }
-                adjustVerticalScrollBar();
-            }
-        });
+        fTimeGraphCtrl.addMouseWheelListener(fMouseWheelListeners.fTimeGraphCtrlListener);
+        fTimeGraphCtrl.addKeyListener(fKeyListeners.fTimeGraphCtrlKeyListener);
 
         fMarkerAxisCtrl = createTimeGraphMarkerAxis(fTimeAlignedComposite, fColorScheme, this);
         fMarkerAxisCtrl.setLayoutData(new GridData(SWT.FILL, SWT.DEFAULT, true, false));
         fMarkerAxisCtrl.addMarkerAxisListener(this);
-        fMarkerAxisCtrl.addMouseWheelListener(new MouseWheelListener() {
-            @Override
-            public void mouseScrolled(MouseEvent e) {
-                if (e.count == 0) {
-                    return;
-                }
-                if ((e.stateMask & SWT.CTRL) != 0) {
-                    fTimeGraphCtrl.zoom(e.count > 0);
-                } else {
-                    fTimeGraphCtrl.horizontalScroll(e.count > 0);
-                }
-            }
-        });
+        fMarkerAxisCtrl.addMouseWheelListener(fMouseWheelListeners.fMarkerAxisCtrlListener);
 
         fVerticalScrollBar = new Slider(fDataViewer, SWT.VERTICAL | SWT.NO_FOCUS);
         fVerticalScrollBar.setLayoutData(new GridData(SWT.DEFAULT, SWT.FILL, false, true, 1, 1));
@@ -595,21 +687,7 @@ public class TimeGraphViewer implements ITimeDataProvider, IMarkerAxisListener, 
 
         fHorizontalScrollBar = new Slider(fDataViewer, SWT.HORIZONTAL | SWT.NO_FOCUS);
         fHorizontalScrollBar.setLayoutData(new GridData(SWT.FILL, SWT.DEFAULT, true, false));
-        fHorizontalScrollBar.addListener(SWT.MouseWheel, new Listener() {
-            @Override
-            public void handleEvent(Event event) {
-                // don't handle the immediately following SWT.Selection event
-                event.doit = false;
-                if (event.count == 0) {
-                    return;
-                }
-                if ((event.stateMask & SWT.CTRL) != 0) {
-                    fTimeGraphCtrl.zoom(event.count > 0);
-                } else {
-                    fTimeGraphCtrl.horizontalScroll(event.count > 0);
-                }
-            }
-        });
+        fHorizontalScrollBar.addListener(SWT.MouseWheel, fMouseWheelListeners.fHorizontalScrollBarListener);
         fHorizontalScrollBar.addListener(SWT.Selection, new Listener() {
             @Override
             public void handleEvent(Event event) {
