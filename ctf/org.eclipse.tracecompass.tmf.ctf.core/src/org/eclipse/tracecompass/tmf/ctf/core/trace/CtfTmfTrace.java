@@ -15,10 +15,16 @@
 package org.eclipse.tracecompass.tmf.ctf.core.trace;
 
 import static org.eclipse.tracecompass.common.core.NonNullUtils.checkNotNull;
+import static org.eclipse.tracecompass.common.core.NonNullUtils.nullToEmptyString;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,12 +33,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.annotation.NonNull;
+import org.eclipse.tracecompass.common.core.process.ProcessUtils;
 import org.eclipse.tracecompass.ctf.core.CTFException;
 import org.eclipse.tracecompass.ctf.core.event.CTFClock;
 import org.eclipse.tracecompass.ctf.core.event.IEventDeclaration;
@@ -48,11 +57,12 @@ import org.eclipse.tracecompass.internal.tmf.ctf.core.trace.iterator.CtfIterator
 import org.eclipse.tracecompass.tmf.core.event.ITmfEvent;
 import org.eclipse.tracecompass.tmf.core.event.ITmfEventField;
 import org.eclipse.tracecompass.tmf.core.event.TmfEventField;
-import org.eclipse.tracecompass.tmf.core.event.aspect.TmfBaseAspects;
 import org.eclipse.tracecompass.tmf.core.event.aspect.ITmfEventAspect;
+import org.eclipse.tracecompass.tmf.core.event.aspect.TmfBaseAspects;
 import org.eclipse.tracecompass.tmf.core.exceptions.TmfTraceException;
 import org.eclipse.tracecompass.tmf.core.project.model.ITmfPropertiesProvider;
 import org.eclipse.tracecompass.tmf.core.timestamp.ITmfTimestamp;
+import org.eclipse.tracecompass.tmf.core.timestamp.TmfTimeRange;
 import org.eclipse.tracecompass.tmf.core.timestamp.TmfTimestamp;
 import org.eclipse.tracecompass.tmf.core.trace.ITmfContext;
 import org.eclipse.tracecompass.tmf.core.trace.ITmfTraceKnownSize;
@@ -65,6 +75,7 @@ import org.eclipse.tracecompass.tmf.core.trace.indexer.TmfBTreeTraceIndexer;
 import org.eclipse.tracecompass.tmf.core.trace.indexer.checkpoint.ITmfCheckpoint;
 import org.eclipse.tracecompass.tmf.core.trace.indexer.checkpoint.TmfCheckpoint;
 import org.eclipse.tracecompass.tmf.core.trace.location.ITmfLocation;
+import org.eclipse.tracecompass.tmf.core.trace.trim.ITmfTrimmableTrace;
 import org.eclipse.tracecompass.tmf.ctf.core.CtfConstants;
 import org.eclipse.tracecompass.tmf.ctf.core.context.CtfLocation;
 import org.eclipse.tracecompass.tmf.ctf.core.context.CtfLocationInfo;
@@ -86,7 +97,7 @@ import com.google.common.collect.ImmutableSet;
  */
 public class CtfTmfTrace extends TmfTrace
         implements ITmfPropertiesProvider, ITmfPersistentlyIndexable,
-        ITmfTraceWithPreDefinedEvents, ITmfTraceKnownSize {
+        ITmfTraceWithPreDefinedEvents, ITmfTraceKnownSize, ITmfTrimmableTrace {
 
     // -------------------------------------------
     // Constants
@@ -740,4 +751,62 @@ public class CtfTmfTrace extends TmfTrace
     public int progress() {
         return (int) (getNbEvents() / REDUCTION_FACTOR);
     }
+
+    /**
+     * @since 2.2
+     */
+    @Override
+    public void trim(@NonNull TmfTimeRange range, @NonNull Path destinationPath, @NonNull IProgressMonitor monitor) throws CoreException {
+        /* Trim and save the new trace */
+        String originPath = getPath();
+        if (!originPath.endsWith(File.separator)) {
+            originPath = originPath + File.separator;
+        }
+        // Dummy 'cp' command that just copies the trace
+//        List<@NonNull String> command = Arrays.asList("bash", "-c", "cp -R " + originPath + "* " + destinationPath.toString()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+//        return;
+
+        List<@NonNull String> command = Arrays.asList("bash", "-c", //$NON-NLS-1$ //$NON-NLS-2$
+                "babeltrace --plugin-path /usr/local/lib/babeltrace/plugins/ -B " + range.getStartTime().toNanos() //$NON-NLS-1$
+                + " -E " + range.getEndTime().toNanos() //$NON-NLS-1$
+                + " \"" + originPath + '\"' //$NON-NLS-1$
+                + " --sink writer.writer --path \"" + destinationPath.toString() + '\"' //$NON-NLS-1$
+                );
+
+        ProcessUtils.getOutputFromCommandCancellable(command,
+                monitor,
+                nullToEmptyString(Messages.CtfTmfTrace_InvokingBabeltrace),
+                // We don't care about the output atm
+                (r, m) -> Collections.emptyList());
+
+        /*
+         * Babeltracecutting dumps the files in a sub-directory called
+         * "trace_000". Bring those back to the level we created, and delete
+         * this now-empty sub-directory.
+         */
+        try {
+            Path trace000Path = destinationPath.resolve("trace_000"); //$NON-NLS-1$
+            Files.walk(trace000Path, 1).forEach(path -> System.out.println(path.toString()));
+
+            Files.walk(trace000Path, 1)
+                    /* Don't move the "trace_000" dir itself */
+                    .filter(path -> path != trace000Path)
+                    .forEach(path -> {
+                try {
+                    Files.move(path, destinationPath.resolve(path.getFileName()));
+                } catch (IOException e) {
+                    System.out.println("error! " + e.getMessage());
+                    /*
+                     * Should not happen because we have checked all permissions
+                     * and the target directory should be empty.
+                     */
+                }
+            });
+            FileUtils.deleteDirectory(trace000Path.toFile());
+        } catch (IOException e) {
+            IStatus status = new Status(IStatus.ERROR, Activator.PLUGIN_ID, Messages.CtfTmfTrace_ErrorMovingFiles, e);
+            throw new CoreException(status);
+        }
+    }
+
 }
