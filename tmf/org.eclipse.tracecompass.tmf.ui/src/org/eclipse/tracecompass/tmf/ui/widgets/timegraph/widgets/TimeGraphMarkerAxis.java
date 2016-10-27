@@ -68,6 +68,10 @@ public class TimeGraphMarkerAxis extends TimeGraphBaseControl {
     private @NonNull List<String> fCategories = Collections.EMPTY_LIST;
     private boolean fCollapsed = false;
 
+    /** Feature toggle swith */
+    private boolean fMarkerSelectionEnabled = true;
+    private boolean fMarkerCategoryVisibilityToggleEnabled = true;
+
     /**
      * Contructor
      *
@@ -169,17 +173,23 @@ public class TimeGraphMarkerAxis extends TimeGraphBaseControl {
             return;
         }
         if (e.x < bounds.x + nameSpace) {
-            String category = getHiddenCategoryForEvent(e, bounds);
-            if (category != null) {
-                for (IMarkerAxisListener listener : fListeners) {
-                    listener.setMarkerCategoryVisible(category, false);
+            if (fMarkerCategoryVisibilityToggleEnabled) {
+                String category = getHiddenCategoryForEvent(e, bounds);
+                if (category != null) {
+                    for (IMarkerAxisListener listener : fListeners) {
+                        listener.setMarkerCategoryVisible(category, false);
+                    }
                 }
             }
             return;
         }
-        IMarkerEvent marker = getMarkerForEvent(e);
-        if (marker != null) {
-            fTimeProvider.setSelectionRangeNotify(marker.getTime(), marker.getTime() + marker.getDuration(), false);
+
+        if (fMarkerSelectionEnabled) {
+            /* Allow marker selection when not pinned */
+            IMarkerEvent marker = getMarkerForEvent(e);
+            if (marker != null) {
+                fTimeProvider.setSelectionRangeNotify(marker.getTime(), marker.getTime() + marker.getDuration(), false);
+            }
         }
     }
 
@@ -444,5 +454,13 @@ public class TimeGraphMarkerAxis extends TimeGraphBaseControl {
         List<String> categories = new ArrayList<>(fCategories);
         categories.retainAll(fMarkers.keySet());
         return categories;
+    }
+
+    @Override
+    public synchronized void setPinned(boolean pinned) {
+        boolean enabled = !pinned;
+
+        fMarkerCategoryVisibilityToggleEnabled = enabled;
+        fMarkerSelectionEnabled = enabled;
     }
 }
