@@ -113,5 +113,15 @@ public abstract class TimeGraphBaseControl extends Canvas implements PaintListen
         return fFontHeight;
     }
 
+    /**
+     * Set the pin state
+     *
+     * @param pinned
+     *            The pin state
+     * @since 2.2
+     */
+    public synchronized void setPinned(boolean pinned) {
+    }
+
     abstract void paint(Rectangle bound, PaintEvent e);
 }
