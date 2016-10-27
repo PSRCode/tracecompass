@@ -145,6 +145,12 @@ public class TimeGraphColorScheme {
     public static final int TI_INTERRUPT = RED;
     public static final int TI_WAIT_EXCEEDED = BLUE;
 
+    /**
+     * Color for the selection line when in a pinned state.
+     * @since 2.2
+     */
+    public static final int SELECTED_TIME_PINNED = DARK_GRAY;
+
     interface IColorProvider {
         Color get();
     }
