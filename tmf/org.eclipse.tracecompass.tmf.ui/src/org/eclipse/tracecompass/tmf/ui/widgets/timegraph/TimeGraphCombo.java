@@ -145,6 +145,7 @@ public class TimeGraphCombo extends Composite {
 
     private Font fTreeFont;
 
+
     // ------------------------------------------------------------------------
     // Classes
     // ------------------------------------------------------------------------
@@ -1507,5 +1508,20 @@ public class TimeGraphCombo extends Composite {
         int marginSize = timeBasedControlsWidth - width;
         layout.marginRight = Math.max(0, marginSize);
         composite.layout();
+    }
+
+    /**
+     * Set the pin state.
+     *
+     * @param pinned
+     *            The pin state
+     * @since 2.2
+     */
+    public void setPinned(boolean pinned) {
+        boolean enabled = !pinned;
+
+        fShowFilterDialogAction.setEnabled(enabled);
+
+        fTimeGraphViewer.setPinned(pinned);
     }
 }
