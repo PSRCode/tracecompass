@@ -131,6 +131,8 @@ public class CallStackViewTest {
     // Separator
     private static final String PIN_VIEW = "Pin View";
     private static final List<String> TOOLBAR_BUTTONS_TOOLTIPS = ImmutableList.of(
+            PIN_VIEW,
+            "",
             ALIGN_VIEWS, CONFIGURE_SYMBOL_PROVIDERS,
             "",
             SORT_BY_NAME, SORT_BY_ID, SORT_BY_START,
@@ -141,9 +143,8 @@ public class CallStackViewTest {
             "",
             ADD_BOOKMARK, PREVIOUS_MARKER, NEXT_MARKER,
             "",
-            SELECT_PREVIOUS_ITEM, SELECT_NEXT_ITEM, ZOOM_IN, ZOOM_OUT,
-            "",
-            PIN_VIEW);
+            SELECT_PREVIOUS_ITEM, SELECT_NEXT_ITEM, ZOOM_IN, ZOOM_OUT
+            );
 
     /**
      * Initialization
