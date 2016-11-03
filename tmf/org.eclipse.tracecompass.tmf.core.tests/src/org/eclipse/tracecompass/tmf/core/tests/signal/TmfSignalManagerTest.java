@@ -14,6 +14,7 @@ package org.eclipse.tracecompass.tmf.core.tests.signal;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static org.eclipse.tracecompass.common.core.NonNullUtils.checkNotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -102,6 +103,163 @@ public class TmfSignalManagerTest {
                 signalReceivers[i].dispose();
             }
         }
+    }
+
+    /**
+     * Test inbound blacklisting
+     */
+    @Test
+    public void testInboundBlacklisting() {
+        final class TestTriplet {
+            TestSignalHandler[] fSignalReceivers;
+            Class<?>[] fExpectedReceivedSignal;
+            Class<? extends TmfSignal> fSignalTypeToIgnore;
+
+            public TestTriplet(TestSignalHandler[] receivers, Class<?>[] expectedSignals, Class<? extends TmfSignal> ignoredSignal) {
+                fSignalTypeToIgnore = ignoredSignal;
+                fExpectedReceivedSignal = expectedSignals;
+                fSignalReceivers = receivers;
+            }
+        }
+
+        final int NB_HANDLERS = 10;
+        TestSignalHandler[] signalVanillaReceivers = new TestSignalHandler[NB_HANDLERS];
+        TestSignalHandler[] ignoreSignal1Receivers = new TestSignalHandler[NB_HANDLERS];
+        TestSignalHandler[] ignoreSignal2Receivers = new TestSignalHandler[NB_HANDLERS];
+        TestSignalHandler[] ignoreSignalAllReceivers = new TestSignalHandler[NB_HANDLERS];
+
+        /* Expected received signals when none is blocked */
+        final Class<?>[] expectedVanillaOrder = new Class[] {
+                TmfStartSynchSignal.class, TestSignal1.class, TmfEndSynchSignal.class,
+                TmfStartSynchSignal.class, TestSignal2.class, TmfEndSynchSignal.class };
+
+        /* Expected received signals when signal 1 is blocked */
+        final Class<?>[] expectedIgnoreSignal1Order = new Class[] {
+                TmfStartSynchSignal.class, TmfEndSynchSignal.class,
+                TmfStartSynchSignal.class, TestSignal2.class, TmfEndSynchSignal.class };
+
+        /* Expected received signals when signal 2 is blocked */
+        final Class<?>[] expectedIgnoreSignal2Order = new Class[] {
+                TmfStartSynchSignal.class, TestSignal1.class, TmfEndSynchSignal.class,
+                TmfStartSynchSignal.class, TmfEndSynchSignal.class };
+
+        /* Expected received signals when all are blocked */
+        final Class<?>[] expectedIgnoreAllOrder = new Class[] {};
+
+        /* Test vector */
+        List<TestTriplet> tests = new ArrayList<>();
+
+        tests.add(new TestTriplet(signalVanillaReceivers, expectedVanillaOrder, null));
+        tests.add(new TestTriplet(ignoreSignal1Receivers, expectedIgnoreSignal1Order, TestSignal1.class));
+        tests.add(new TestTriplet(ignoreSignal2Receivers, expectedIgnoreSignal2Order, TestSignal2.class));
+        tests.add(new TestTriplet(ignoreSignalAllReceivers, expectedIgnoreAllOrder, TmfSignal.class));
+
+        for (TestTriplet test : tests) {
+            for (int i = 0; i < NB_HANDLERS; i++) {
+                Class<? extends TmfSignal> signalTypeToIgnore = test.fSignalTypeToIgnore;
+
+                TestSignalHandler receiver = new TestSignalHandler();
+
+                test.fSignalReceivers[i] = receiver;
+
+                /* Set the inbound blacklisting */
+                if (signalTypeToIgnore != null) {
+                    TmfSignalManager.addIgnoredInboundSignal(receiver, signalTypeToIgnore);
+                }
+            }
+        }
+
+        final TestSignal1 firstSignal = new TestSignal1(signalSender);
+        final TestSignal2 secondSignal = new TestSignal2(signalSender);
+
+        /* Send signals */
+        signalSender.sendSignal(firstSignal);
+        signalSender.sendSignal(secondSignal);
+
+        for (TestTriplet test : tests) {
+            TestSignalHandler[] receiver = test.fSignalReceivers;
+            Class<?>[] expectedSignals = test.fExpectedReceivedSignal;
+            for (int i = 0; i < NB_HANDLERS; i++) {
+                assertEquals(expectedSignals.length, receiver[i].receivedSignals.size());
+
+                for (int k = 0; k < expectedSignals.length; k++) {
+                    assertEquals(receiver[i].receivedSignals.get(k).getClass(), expectedSignals[k]);
+                }
+            }
+        }
+
+        for (TestTriplet test : tests) {
+            TestSignalHandler[] receiver = test.fSignalReceivers;
+            for (int i = 0; i < NB_HANDLERS; i++) {
+                receiver[i].dispose();
+            }
+        }
+    }
+
+    /**
+     * Test outbound blacklisting
+     */
+    @Test
+    public void testOutboundBlacklisting() {
+        final class TestPair {
+            Class<?>[] fExpectedReceivedSignal;
+            Class<? extends TmfSignal> fSignalToBlock;
+
+            public TestPair(Class<?>[] expectedReceivedSignal, Class<? extends TmfSignal> signalToBlock) {
+                fSignalToBlock = signalToBlock;
+                fExpectedReceivedSignal = expectedReceivedSignal;
+            }
+
+        }
+
+        /* Preparing tests results */
+        final Class<?>[] expectedBlockSendingSignal1 = new Class[] {
+                TmfStartSynchSignal.class, TestSignal2.class, TmfEndSynchSignal.class };
+        final Class<?>[] expectedBlockSendingSignal2 = new Class[] {
+                TmfStartSynchSignal.class, TestSignal1.class, TmfEndSynchSignal.class };
+        final Class<?>[] expectedBlockSendingSignalNone = new Class[] {
+                TmfStartSynchSignal.class, TestSignal1.class, TmfEndSynchSignal.class,
+                TmfStartSynchSignal.class, TestSignal2.class, TmfEndSynchSignal.class };
+        final Class<?>[] expectedBlockSendingSignalAll = new Class[] {};
+
+        List<TestPair> tests = new ArrayList<>();
+        tests.add(new TestPair(expectedBlockSendingSignal1, TestSignal1.class));
+        tests.add(new TestPair(expectedBlockSendingSignal2, TestSignal2.class));
+        tests.add(new TestPair(expectedBlockSendingSignalAll, TmfSignal.class));
+        tests.add(new TestPair(expectedBlockSendingSignalNone, null));
+
+        TestSignalHandler signalReceiver = new TestSignalHandler();
+
+        final TestSignal1 firstSignal = new TestSignal1(signalSender);
+        final TestSignal2 secondSignal = new TestSignal2(signalSender);
+
+        /* The actual test */
+        for (TestPair test : tests) {
+            /* Reset state of reused object */
+            signalReceiver.receivedSignals.clear();
+            TmfSignalManager.clearIgnoredOutboundSignalList(signalSender);
+
+            /* Setup outbound blacklisting */
+            Class<? extends TmfSignal> signalToBlock = test.fSignalToBlock;
+            if (signalToBlock != null) {
+                TmfSignalManager.addIgnoredOutboundSignal(checkNotNull(signalSender), signalToBlock);
+            }
+
+            signalSender.sendSignal(firstSignal);
+            signalSender.sendSignal(secondSignal);
+
+            /*
+             * Validate that only non blacklisted signal for the source made it
+             */
+            Class<?>[] expectedSignals = test.fExpectedReceivedSignal;
+            assertEquals(expectedSignals.length, signalReceiver.receivedSignals.size());
+
+            for (int k = 0; k < expectedSignals.length; k++) {
+                assertEquals(signalReceiver.receivedSignals.get(k).getClass(), expectedSignals[k]);
+            }
+        }
+
+        signalReceiver.dispose();
     }
 
     /**
