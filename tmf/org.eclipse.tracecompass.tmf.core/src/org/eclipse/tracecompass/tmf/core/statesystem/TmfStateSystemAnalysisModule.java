@@ -15,6 +15,7 @@ package org.eclipse.tracecompass.tmf.core.statesystem;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -31,8 +32,10 @@ import org.eclipse.tracecompass.internal.tmf.core.statesystem.backends.partial.P
 import org.eclipse.tracecompass.statesystem.core.ITmfStateSystem;
 import org.eclipse.tracecompass.statesystem.core.ITmfStateSystemBuilder;
 import org.eclipse.tracecompass.statesystem.core.StateSystemFactory;
+import org.eclipse.tracecompass.statesystem.core.Statedump;
 import org.eclipse.tracecompass.statesystem.core.backend.IStateHistoryBackend;
 import org.eclipse.tracecompass.statesystem.core.backend.StateHistoryBackendFactory;
+import org.eclipse.tracecompass.statesystem.core.statevalue.ITmfStateValue;
 import org.eclipse.tracecompass.tmf.core.analysis.TmfAbstractAnalysisModule;
 import org.eclipse.tracecompass.tmf.core.event.ITmfEvent;
 import org.eclipse.tracecompass.tmf.core.exceptions.TmfTraceException;
@@ -464,6 +467,14 @@ public abstract class TmfStateSystemAnalysisModule extends TmfAbstractAnalysisMo
             throw new IllegalArgumentException();
         }
 
+        /*
+         * Note we have to do this before fStateProvider is assigned. After
+         * that, the signal listener below will start sending real trace events
+         * through the state provider.
+         */
+        loadInitialState(provider);
+
+        /* Continue on initializing the event request to read trace events. */
         ITmfEventRequest request = fRequest;
         if ((request != null) && (!request.isCompleted())) {
             request.cancel();
@@ -496,6 +507,42 @@ public abstract class TmfStateSystemAnalysisModule extends TmfAbstractAnalysisMo
             }
         } catch (InterruptedException e) {
              e.printStackTrace();
+        }
+    }
+
+    /**
+     * Batch-load the initial state, if there is any.
+     */
+    private void loadInitialState(ITmfStateProvider provider) {
+        final ITmfStateSystemBuilder ss = (ITmfStateSystemBuilder) provider.getAssignedStateSystem();
+        final ITmfTrace trace = getTrace();
+        if (ss == null || trace == null) {
+            /* These should have been initialized already. */
+            throw new IllegalStateException();
+        }
+        final long startTime = trace.getStartTime().toNanos();
+
+        Statedump sd = Statedump.loadState(Paths.get(trace.getPath()), ss.getSSID());
+        if (sd == null) {
+            /* No statedump found, nothing to pre-load */
+            return;
+        }
+
+        /*
+         * Do not load the statedump if its version does not match the current
+         * provider.
+         */
+        if (provider.getVersion() != sd.getVersion()) {
+            return;
+        }
+
+        /* Load the statedump into the statesystem */
+        for (int i = 0; i < sd.getAttributes().size(); i++) {
+            String[] attributePath = sd.getAttributes().get(i);
+            int quark = ss.getQuarkAbsoluteAndAdd(attributePath);
+            ITmfStateValue initialState = sd.getStates().get(i);
+
+            ss.modifyAttribute(startTime, initialState, quark);
         }
     }
 
