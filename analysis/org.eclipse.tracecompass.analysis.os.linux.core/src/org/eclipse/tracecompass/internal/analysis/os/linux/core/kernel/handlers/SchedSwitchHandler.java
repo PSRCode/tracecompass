@@ -116,6 +116,14 @@ public class SchedSwitchHandler extends KernelEventHandler {
         }
         ss.modifyAttribute(timestamp, value, formerThreadNode);
 
+        /* Update the "active" attribute accordingly */
+        int quark = ss.getQuarkRelativeAndAdd(formerThreadNode, Attributes.ACTIVE_STATE);
+        if (KernelEventHandlerUtils.IS_STATE_VALUE_ACTIVE.test(value)) {
+            value = StateValues.PROCESS_ACTIVE_STATE_ACTIVE;
+        } else {
+            value = StateValues.PROCESS_ACTIVE_STATE_INACTIVE;
+        }
+        ss.modifyAttribute(timestamp, value, quark);
     }
 
     private static boolean isDead(int state) {

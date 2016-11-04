@@ -38,6 +38,7 @@ public interface Attributes {
     /* Sub-attributes of the Thread nodes */
     String PPID = "PPID";
     String EXEC_NAME = "Exec_name";
+    String ACTIVE_STATE = "active";
 
     String PRIO = "Prio";
     String SYSTEM_CALL = "System_call";

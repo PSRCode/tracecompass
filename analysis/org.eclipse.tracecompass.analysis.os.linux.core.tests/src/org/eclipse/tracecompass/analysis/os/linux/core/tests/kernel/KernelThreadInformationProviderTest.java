@@ -21,6 +21,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -157,6 +158,27 @@ public class KernelThreadInformationProviderTest {
         assertEquals(Integer.valueOf(21), tid);
 
     }
+
+    /**
+     * Test the {@link KernelThreadInformationProvider#isThreadActiveRange}
+     * method.
+     */
+    @Test
+    public void testIsThreadActiveRange() {
+        KernelAnalysisModule module = checkNotNull(fModule);
+        final long start = 45L;
+        final long end = 65L;
+
+        /* Thread 30 should be active in the range */
+        Set<Integer> tids = KernelThreadInformationProvider.getActiveThreadsForRange(module, start, end);
+        assertNotNull(tids);
+        assertTrue(tids.contains(30));
+
+        // TODO Check for non-active states too. Unfortunately the test trace
+        // wrongly considers all processes to be in a active (value=5) state all
+        // the time.
+    }
+
 
     /**
      * Test the

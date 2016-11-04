@@ -59,6 +59,14 @@ public class SchedWakeupHandler extends KernelEventHandler {
                 status != StateValues.PROCESS_STATUS_RUN_USERMODE) {
             value = StateValues.PROCESS_STATUS_WAIT_FOR_CPU_VALUE;
             ss.modifyAttribute(timestamp, value, threadNode);
+
+            /*
+             * We consider the state "wait for cpu" as active, mark the thread
+             * as such.
+             */
+            int quark = ss.getQuarkRelativeAndAdd(threadNode, Attributes.ACTIVE_STATE);
+            value = StateValues.PROCESS_ACTIVE_STATE_ACTIVE;
+            ss.modifyAttribute(timestamp, value, quark);
         }
 
         /*

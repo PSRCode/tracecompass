@@ -14,6 +14,7 @@ package org.eclipse.tracecompass.analysis.os.linux.core.kernel;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -73,6 +74,120 @@ public final class KernelThreadInformationProvider {
         } catch (AttributeNotFoundException | StateSystemDisposedException | TimeRangeException e) {
         }
         return null;
+    }
+
+    /**
+     * The the threads that have been scheduled on the given CPU(s), for the
+     * given time range.
+     *
+     * @param module
+     *            The kernel analysis module to query
+     * @param cpus
+     *            The list of cpus
+     * @param rangeStart
+     *            The start of the time range
+     * @param rangeEnd
+     *            The end of the time range
+     * @return A set of all the thread IDs that are run on said CPUs on the time
+     *         range. Empty set if there is no thread on the CPUs in this time
+     *         range. Null if the information is not available.
+     * @since 2.2
+     */
+    public static @Nullable Set<Integer> getThreadsOfCpus(KernelAnalysisModule module, List<Long> cpus, long rangeStart, long rangeEnd) {
+        ITmfStateSystem ss = module.getStateSystem();
+        if (ss == null) {
+            return null;
+        }
+
+        Set<Integer> set = new HashSet<>();
+
+        for (Long cpu : cpus) {
+            List<ITmfStateInterval> intervals = null;
+            try {
+                int threadQuark = ss.getQuarkAbsolute(Attributes.CPUS, cpu.toString(), Attributes.CURRENT_THREAD);
+                intervals = StateSystemUtils.queryHistoryRange(ss, threadQuark, rangeStart, rangeEnd);
+            } catch (AttributeNotFoundException | StateSystemDisposedException | TimeRangeException e) {
+                continue;
+            }
+
+            intervals.stream()
+                    .map(interval -> interval.getStateValue())
+                    .filter(e -> !e.isNull())
+                    .mapToInt(ITmfStateValue::unboxInt)
+                    .distinct()
+                    .filter(tid -> tid != 0)
+                    .forEach(e -> set.add(e));
+        }
+
+        return set;
+    }
+
+    /**
+     * Return all the threads that are considered active in the given time
+     * range.
+     *
+     * @param module
+     *            The kernel analysis module to query
+     * @param rangeStart
+     *            The start of the time range
+     * @param rangeEnd
+     *            The end of the time range
+     * @return A set of all the thread IDs that are considered active in the
+     *         time range. Empty set if there are none. Null if the information
+     *         is not available.
+     * @since 2.2
+     */
+    public static @Nullable Set<Integer> getActiveThreadsForRange(KernelAnalysisModule module, long rangeStart, long rangeEnd) {
+        ITmfStateSystem ss = module.getStateSystem();
+        if (ss == null) {
+            return null;
+        }
+
+        Set<Integer> activeTids = new HashSet<>();
+
+        try {
+            List<ITmfStateInterval> query = ss.queryFullState(rangeStart);
+            int threadsQuark = ss.getQuarkAbsolute(Attributes.THREADS);
+            List<Integer> threadQuarks = ss.getSubAttributes(threadsQuark, false);
+
+            for (int threadQuark : threadQuarks) {
+                int activeStateQuark = ss.getQuarkRelative(threadQuark, Attributes.ACTIVE_STATE);
+                ITmfStateInterval activeInterval = query.get(activeStateQuark);
+
+                /* Keep those whose state value is already active at the start of the range */
+                if (activeInterval.getStateValue().equals(StateValues.PROCESS_ACTIVE_STATE_ACTIVE)) {
+                    String attribName = ss.getAttributeName(threadQuark);
+                    /* Ignore swapper threads */
+                    if (attribName.startsWith(Attributes.THREAD_0_PREFIX)) {
+                        continue;
+                    }
+                    activeTids.add(Integer.parseInt(attribName));
+                    continue;
+                }
+
+                /*
+                 * For inactive values, keep them only if they hit a state
+                 * change during the interval (i.e., if the end time of the
+                 * interval is before the rangeEnd).
+                 *
+                 * Note this will include null -> inactive transitions and vice
+                 * versa, which is fine.
+                 */
+                if (activeInterval.getEndTime() < rangeEnd) {
+                    String attribName = ss.getAttributeName(threadQuark);
+                    /* Ignore swapper threads */
+                    if (attribName.startsWith(Attributes.THREAD_0_PREFIX)) {
+                        continue;
+                    }
+                    activeTids.add(Integer.parseInt(attribName));
+                }
+            }
+
+        } catch (AttributeNotFoundException | StateSystemDisposedException | TimeRangeException e) {
+            return null;
+        }
+
+        return activeTids;
     }
 
     /**

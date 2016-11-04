@@ -21,6 +21,7 @@ import org.eclipse.tracecompass.statesystem.core.statevalue.TmfStateValue;
  * history file.
  *
  * @author Alexandre Montplaisir
+ * @noimplement This interface is not intended to be implemented by clients.
  * @since 2.0
  */
 @SuppressWarnings("javadoc")
@@ -42,6 +43,12 @@ public interface StateValues {
     ITmfStateValue PROCESS_STATUS_RUN_SYSCALL_VALUE = TmfStateValue.newValueInt(PROCESS_STATUS_RUN_SYSCALL);
     ITmfStateValue PROCESS_STATUS_INTERRUPTED_VALUE = TmfStateValue.newValueInt(PROCESS_STATUS_INTERRUPTED);
     ITmfStateValue PROCESS_STATUS_WAIT_FOR_CPU_VALUE = TmfStateValue.newValueInt(PROCESS_STATUS_WAIT_FOR_CPU);
+
+    // TODO Change to boolean state values
+    /** @since 2.2 */
+    ITmfStateValue PROCESS_ACTIVE_STATE_ACTIVE = TmfStateValue.newValueInt(1);
+    /** @since 2.2 */
+    ITmfStateValue PROCESS_ACTIVE_STATE_INACTIVE = TmfStateValue.newValueInt(0);
 
     /* CPU Status */
     int CPU_STATUS_IDLE = 0;

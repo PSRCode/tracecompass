@@ -71,27 +71,43 @@ public class StateDumpHandler extends KernelEventHandler {
         setStatus(ss, status, curThreadNode, timestamp);
     }
 
+    // TODO Add "active" attrib here
     private static void setStatus(ITmfStateSystemBuilder ss, int status, int curThreadNode, long timestamp) {
-        ITmfStateValue value;
-        if (ss.queryOngoingState(curThreadNode).isNull()) {
-            switch (status) {
-            case LinuxValues.STATEDUMP_PROCESS_STATUS_WAIT_CPU:
-                value = StateValues.PROCESS_STATUS_WAIT_FOR_CPU_VALUE;
-                break;
-            case LinuxValues.STATEDUMP_PROCESS_STATUS_WAIT:
-                /*
-                 * We have no information on what the process is waiting on
-                 * (unlike a sched_switch for example), so we will use the
-                 * WAIT_UNKNOWN state instead of the "normal" WAIT_BLOCKED
-                 * state.
-                 */
-                value = StateValues.PROCESS_STATUS_WAIT_UNKNOWN_VALUE;
-                break;
-            default:
-                value = StateValues.PROCESS_STATUS_UNKNOWN_VALUE;
-            }
-            ss.modifyAttribute(timestamp, value, curThreadNode);
+        if (!ss.queryOngoingState(curThreadNode).isNull()) {
+            /*
+             * Ignore this statedump if we had previous information about this
+             * thread from "real" trace events.
+             */
+            return;
         }
+
+        ITmfStateValue value;
+        switch (status) {
+        case LinuxValues.STATEDUMP_PROCESS_STATUS_WAIT_CPU:
+            value = StateValues.PROCESS_STATUS_WAIT_FOR_CPU_VALUE;
+            break;
+        case LinuxValues.STATEDUMP_PROCESS_STATUS_WAIT:
+            /*
+             * We have no information on what the process is waiting on (unlike
+             * a sched_switch for example), so we will use the WAIT_UNKNOWN
+             * state instead of the "normal" WAIT_BLOCKED state.
+             */
+            value = StateValues.PROCESS_STATUS_WAIT_UNKNOWN_VALUE;
+            break;
+        default:
+            value = StateValues.PROCESS_STATUS_UNKNOWN_VALUE;
+        }
+        ss.modifyAttribute(timestamp, value, curThreadNode);
+
+        /* Mark the thread as active or not, accordingly */
+        ITmfStateValue activeValue;
+        if (KernelEventHandlerUtils.IS_STATE_VALUE_ACTIVE.test(value)) {
+            activeValue = StateValues.PROCESS_ACTIVE_STATE_ACTIVE;
+        } else {
+            activeValue = StateValues.PROCESS_ACTIVE_STATE_INACTIVE;
+        }
+        int quark = ss.getQuarkRelativeAndAdd(curThreadNode, Attributes.ACTIVE_STATE);
+        ss.modifyAttribute(timestamp, activeValue, quark);
     }
 
     private static void setPpid(ITmfStateSystemBuilder ss, int tid, int pid, int ppid, int curThreadNode, long timestamp) {

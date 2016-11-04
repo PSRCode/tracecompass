@@ -10,6 +10,7 @@
 package org.eclipse.tracecompass.internal.analysis.os.linux.core.kernel.handlers;
 
 import java.util.List;
+import java.util.function.Predicate;
 
 import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.tracecompass.analysis.os.linux.core.kernel.StateValues;
@@ -34,6 +35,22 @@ public final class KernelEventHandlerUtils {
 
     private KernelEventHandlerUtils() {
     }
+
+    /**
+     * Predicate indicating if a thread state value is considered active or not.
+     */
+    public static final Predicate<ITmfStateValue> IS_STATE_VALUE_ACTIVE = stateValue -> {
+        if (stateValue.isNull()) {
+            return false;
+        }
+        int val = stateValue.unboxInt();
+        if (val == StateValues.PROCESS_STATUS_UNKNOWN ||
+                val == StateValues.PROCESS_STATUS_WAIT_BLOCKED ||
+                val == StateValues.PROCESS_STATUS_WAIT_UNKNOWN) {
+            return false;
+        }
+        return true;
+    };
 
     /**
      * Get CPU
@@ -131,6 +148,11 @@ public final class KernelEventHandlerUtils {
             value = StateValues.PROCESS_STATUS_RUN_SYSCALL_VALUE;
         }
         ssb.modifyAttribute(timestamp, value, currentThreadNode);
+
+        /* Process is now considered active */
+        quark = ssb.getQuarkRelativeAndAdd(currentThreadNode, Attributes.ACTIVE_STATE);
+        value = StateValues.PROCESS_ACTIVE_STATE_ACTIVE;
+        ssb.modifyAttribute(timestamp, value, quark);
     }
 
     /**
