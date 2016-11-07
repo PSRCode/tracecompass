@@ -102,8 +102,8 @@ public class ResourcesViewTest extends KernelTimeGraphViewTestBase {
 
     @Override
     protected List<String> getToolbarTooltips() {
-        return Arrays.asList("Pin View", SEPARATOR,
-                "Align Views", "Show View Filters", "Show Legend", SEPARATOR,
+        return Arrays.asList(PIN_VIEW_TOOLTIP, SEPARATOR,
+                ALIGN_VIEW_TOOLTIP, "Show View Filters", "Show Legend", SEPARATOR,
                 "Reset the Time Scale to Default", "Select Previous State Change", "Select Next State Change", SEPARATOR,
                 "Add Bookmark...", "Previous Marker", "Next Marker", SEPARATOR,
                 "Select Previous Resource", "Select Next Resource", "Zoom In", "Zoom Out" );

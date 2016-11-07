@@ -44,6 +44,16 @@ public abstract class KernelTimeGraphViewTestBase extends KernelTestBase {
     protected static final String SEPARATOR = "";
 
     /**
+     * Tooltip used for the pin view button
+     */
+    protected static final String PIN_VIEW_TOOLTIP = "Pin View";
+
+    /**
+     * Tooltip used for the align views button
+     */
+    protected static final String ALIGN_VIEW_TOOLTIP = "Align Views";
+
+    /**
      * Get an SWTBotView of the view being tested
      *
      * @return a bot of the view being tested
@@ -79,6 +89,47 @@ public abstract class KernelTimeGraphViewTestBase extends KernelTestBase {
         List<SWTBotToolbarButton> buttons = getViewBot().getToolbarButtons();
         List<String> tooltipsExpected = getToolbarTooltips();
         List<String> tooltips = new ArrayList<>();
+        for (SWTBotToolbarButton button : buttons) {
+            tooltips.add(button.getToolTipText());
+            assertTrue(button.getText() + " enabled", button.isEnabled());
+            assertTrue(button.getText() + " visible", button.isVisible());
+        }
+        assertEquals(tooltipsExpected, tooltips);
+    }
+
+    /**
+     * Test toolbar button when pinned. Only the pin button and align should be
+     * enabled.
+     */
+    @Test
+    public void testPinnedToolbar() {
+        List<SWTBotToolbarButton> buttons = getViewBot().getToolbarButtons();
+        List<String> tooltipsExpected = getToolbarTooltips();
+        List<String> tooltips = new ArrayList<>();
+
+        /* Click the pin button */
+        getViewBot().toolbarButton(PIN_VIEW_TOOLTIP).click();
+
+        for (SWTBotToolbarButton button : buttons) {
+            tooltips.add(button.getToolTipText());
+            if (button.getToolTipText().equals(SEPARATOR)) {
+                /** Skip separator */
+                continue;
+            }
+            if (button.getToolTipText().equals(PIN_VIEW_TOOLTIP) || button.getToolTipText().equals(ALIGN_VIEW_TOOLTIP)) {
+                assertTrue(button.getText() + " enabled", button.isEnabled());
+                assertTrue(button.getText() + " visible", button.isVisible());
+            } else {
+                assertTrue(button.getText() + " disabled", !button.isEnabled());
+                assertTrue(button.getText() + " visible", button.isVisible());
+            }
+        }
+
+        assertEquals(tooltipsExpected, tooltips);
+
+        /* Return to initial state */
+        getViewBot().toolbarButton(PIN_VIEW_TOOLTIP).click();
+        tooltips.clear();
         for (SWTBotToolbarButton button : buttons) {
             tooltips.add(button.getToolTipText());
             assertTrue(button.getText() + " enabled", button.isEnabled());
