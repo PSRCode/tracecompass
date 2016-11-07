@@ -16,13 +16,18 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -30,7 +35,12 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.tracecompass.common.core.StreamUtils;
+import org.eclipse.tracecompass.internal.tmf.ui.Activator;
 import org.eclipse.tracecompass.internal.tmf.ui.project.operations.TmfWorkspaceModifyOperation;
+import org.eclipse.tracecompass.statesystem.core.ITmfStateSystem;
+import org.eclipse.tracecompass.statesystem.core.Statedump;
+import org.eclipse.tracecompass.tmf.core.statesystem.TmfStateSystemAnalysisModule;
 import org.eclipse.tracecompass.tmf.core.timestamp.TmfTimeRange;
 import org.eclipse.tracecompass.tmf.core.trace.ITmfTrace;
 import org.eclipse.tracecompass.tmf.core.trace.TmfTraceManager;
@@ -155,8 +165,39 @@ public class TrimTraceHandler extends AbstractHandler {
             public void execute(@Nullable IProgressMonitor monitor) throws CoreException {
                 IProgressMonitor mon = (monitor == null ? new NullProgressMonitor() : monitor);
 
-                /* Perform the trace-specific trim operation. */
+                /* Retrieve the state system modules to use */
+                long dumpTime = tr.getStartTime().toNanos();
+                List<@NonNull TmfStateSystemAnalysisModule> statesystemModules = StreamUtils.getStream(trace.getAnalysisModules())
+                        .filter(module -> module instanceof TmfStateSystemAnalysisModule)
+                        .map(module -> (TmfStateSystemAnalysisModule) module)
+                        .collect(Collectors.toList());
+
+                /*
+                 * Perform the trace-specific trim operation. This should create
+                 * the trace file(s) in the destination path.
+                 */
                 trimmableTrace.trim(tr, tracePath, mon);
+
+                /* Write the statedump files in the new trace's location. */
+                try {
+                    for (TmfStateSystemAnalysisModule module : statesystemModules) {
+                        Integer version = module.getProviderVersion();
+                        ITmfStateSystem ss = module.getStateSystem();
+                        if (version == null || ss == null) {
+                            continue;
+                        }
+                        if (dumpTime > ss.getCurrentEndTime() || dumpTime < ss.getStartTime()) {
+                            continue;
+                        }
+
+                        Statedump statedump = new Statedump(ss, dumpTime, version);
+                        statedump.dumpState(tracePath, ss.getSSID());
+                    }
+
+                } catch (IOException e) {
+                    IStatus status = new Status(IStatus.ERROR, Activator.PLUGIN_ID, "An error occured while attempting to save the initial state"); //$NON-NLS-1$
+                    throw new CoreException(status);
+                }
 
                 /* Import the new trace into the current project, at the top-level. */
                 TmfProjectElement currentProjectElement = traceElem.getProject();
