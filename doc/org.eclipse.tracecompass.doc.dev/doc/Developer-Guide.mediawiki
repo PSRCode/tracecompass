@@ -322,6 +322,7 @@ This tutorial will cover concepts like:
 * Signal handling (@TmfSignalHandler)
 * Data requests (TmfEventRequest)
 * SWTChart integration
+* Use of the pin feature
 
 '''Note''': Trace Compass 0.1.0 provides base implementations for generating SWTChart viewers and views. For more details please refer to chapter [[#TMF Built-in Views and Viewers]].
 
@@ -655,6 +656,78 @@ The view is now ready but we need a proper trace to test it. For this example, a
 [[Image:images/SampleView.png]]<br>
 
 In summary, we have implemented a simple TMF view using the SWTChart library. We made use of signals and requests to populate the view at the appropriate time and we formated the time stamps nicely. We also made sure that the time stamp format is updated when the preferences change.
+
+==== Pin feature ====
+
+The pin feature allow a view to freeze. How it freezes is up to the view itself. Normally a pinned view
+will not synchronized on active trace changes, visual time range changes, selection time changes, marker updates etc.
+
+By default TmfView provide, in it's toolbar, a pin button. <br>
+[[Image:images/TmfViewPinAction.png]]<br>
+
+By default nothing is done on button press, <code>setPinned</code> needs to be overridden to take action on user interaction. It is the view responsibility to propagate the pinned state to his children (controls, scroll bars, etc.).
+
+e.g <code>setPinned</code> from ControlFlowView:
+<pre>
+    @Override
+    protected synchronized void setPinned(boolean pinned) {
+
+        /* Is pinned */
+        if (pinned) {
+            /* Ignore all outbound and inbound signal */
+            TmfSignalManager.addIgnoredOutboundSignal(this, TmfSignal.class);
+            TmfSignalManager.addIgnoredInboundSignal(this, TmfSignal.class);
+
+            String objectType = Messages.ControlFlowView_TraceLabel;
+            if (getTrace() instanceof TmfExperiment) {
+                objectType = Messages.ControlFlowView_ExperimentLabel;
+            }
+            setPartName(String.format("%s [%s][%s:%s]", fOriginalTabLabel, Messages.ControlFlowView_PinnedLabel, objectType, getTrace().getName())); //$NON-NLS-1$
+        } else {
+            TmfSignalManager.clearIgnoredInboundSignalList(this);
+            TmfSignalManager.clearIgnoredOutboundSignalList(this);
+
+            setPartName(fOriginalTabLabel);
+
+            loadTrace(TmfTraceManager.getInstance().getActiveTrace());
+        }
+
+        boolean enabled = !pinned;
+
+        fFlatAction.setEnabled(enabled);
+        fHierarchicalAction.setEnabled(enabled);
+        fOptimizationAction.setEnabled(enabled);
+        fPreviousEventAction.setEnabled(enabled);
+        fNextEventAction.setEnabled(enabled);
+        fThreadPresentationMenu.setVisible(enabled);
+        fThreadPresentationMenu.markDirty();
+
+        fShowFollowThreadAction = enabled;
+
+        /* Propagate pin state to viewer */
+        if (getTimeGraphCombo() != null) {
+            getTimeGraphCombo().setPinned(pinned);
+        } else {
+            getTimeGraphViewer().setPinned(pinned);
+        }
+
+        redraw();
+    }
+
+</pre>
+
+==== Disabling the pin feature ====
+
+If one wish to disable the pin feature the <code>canBePinned</code> method can be overridden to return false. By default this function return <code>True</code>.
+
+e.g:
+
+<pre>
+    @Override
+    protected boolean canBePinned() {
+        return false;
+    }
+</pre>
 
 == TMF Built-in Views and Viewers ==
 

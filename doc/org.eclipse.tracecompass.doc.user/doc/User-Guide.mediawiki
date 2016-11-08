@@ -1975,6 +1975,10 @@ The tooltip indicates:
 The Control Flow View '''toolbar''', located at the top right of the view, has shortcut buttons to perform common actions:
 
 {|
+| [[Image:images/pin_view.gif]]
+| Pin view
+| Pin and unpin a view. A pinned control flow view is frozen in time and associated with the trace selected at the time of pinning. When the unpin button is pressed the view synchronize back with the current state (trace, visible time range, time range selection, etc.).
+|-
 | [[Image:images/link.gif]]
 | Align Views
 | Disable and enable the automatic time axis alignment of time-based views. Disabling the alignment in this view will disable this feature across all the views because it's a workspace preference.
@@ -2125,6 +2129,10 @@ See Control Flow View's '''[[#Incomplete_regions | Incomplete regions]]'''.
 The Resources View '''toolbar''', located at the top right of the view, has shortcut buttons to perform common actions:
 
 {|
+| [[Image:images/pin_view.gif]]
+| Pin view
+| Pin and unpin a view. A pinned resources view is frozen in time and associated with the trace selected at the time of pinning. When the unpin button is pressed the view synchronize back with the current state (trace, visible time range, time range selection, etc.).
+|-
 | [[Image:images/link.gif]]
 | Align Views
 | Disable and enable the automatic time axis alignment of time-based views. Disabling the alignment in this view will disable this feature across all the views because it's a workspace preference.
