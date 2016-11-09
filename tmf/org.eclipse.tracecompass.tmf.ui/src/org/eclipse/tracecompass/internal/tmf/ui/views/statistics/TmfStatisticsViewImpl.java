@@ -82,6 +82,7 @@ public class TmfStatisticsViewImpl extends TmfView {
 
     @Override
     public void createPartControl(Composite parent) {
+        super.createPartControl(parent);
         fStatsViewers.setParent(parent);
         createStatisticsViewers();
 
