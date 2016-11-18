@@ -1968,6 +1968,14 @@ The tooltip indicates:
 * the pointed state date and start/stop times
 * the pointed state duration (seconds)
 
+==== Dynamics Filters ====
+
+Dynamic filter are filters that are processed and applied each time the control flow view visible time range changes.
+
+===== Show Active Threads Only =====
+
+
+
 === Toolbar ===
 
 <!-- Keep in sync with ref:resource-view-toolbar -->

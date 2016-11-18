@@ -41,6 +41,7 @@ public class Messages extends NLS {
     public static String ControlFlowView_uncheckInactiveToolTip;
     public static String ControlFlowView_attributeSyscallName;
     public static String ControlFlowView_attributeCpuName;
+
     public static String ControlFlowView_flatViewLabel;
     public static String ControlFlowView_flatViewToolTip;
     public static String ControlFlowView_hierarchicalViewLabel;

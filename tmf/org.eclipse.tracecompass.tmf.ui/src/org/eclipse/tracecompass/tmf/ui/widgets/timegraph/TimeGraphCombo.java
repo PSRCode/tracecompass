@@ -1081,7 +1081,9 @@ public class TimeGraphCombo extends Composite {
     public void removeFilter(@NonNull ViewerFilter filter) {
         fInhibitTreeSelection = true;
         ViewerFilter wrapper = fViewerFilterMap.get(filter);
-        fTreeViewer.removeFilter(wrapper);
+        if (wrapper != null) {
+            fTreeViewer.removeFilter(wrapper);
+        }
         fTimeGraphViewer.removeFilter(filter);
         fViewerFilterMap.remove(filter);
         alignTreeItems(true);

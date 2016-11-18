@@ -1867,6 +1867,16 @@ public abstract class AbstractTimeGraphView extends TmfView implements ITmfTimeA
     }
 
     /**
+     * Gets the trace to viewer filters map.
+     *
+     * @return The trace to viewer filters map
+     * @since 2.2
+     */
+    protected @NonNull Map<ITmfTrace, ViewerFilter[]> getFiltersMap() {
+        return checkNotNull(fFiltersMap);
+    }
+
+    /**
      * Refresh the display
      */
     protected void refresh() {
