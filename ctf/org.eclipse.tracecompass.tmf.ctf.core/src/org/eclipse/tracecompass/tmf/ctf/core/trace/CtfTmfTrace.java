@@ -795,7 +795,7 @@ public class CtfTmfTrace extends TmfTrace
         List<@NonNull String> command = Arrays.asList("bash", "-c", "cp -R " + originPath + "* " + destinationPath.toString()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
         ProcessUtils.getOutputFromCommandCancellable(command,
                 monitor,
-                "Invoking external tool",
+                nullToEmptyString(Messages.CtfTmfTrace_InvokingBabeltrace),
                 // We don't care about the output atm
                 (r, m) -> Collections.emptyList());
     }
