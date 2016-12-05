@@ -753,6 +753,54 @@ public class CtfTmfTrace extends TmfTrace
     }
 
     /**
+     * Perform stream intersection on the current trace. This means trimming the
+     * trace to the largest time range for which all CTF streams have events
+     * present in them.
+     *
+     * Since the initial trace needs to be imported/initialized in Trace
+     * Compass, it works by creating a new trace which results from the stream
+     * intersection operation.
+     *
+     * A typical use case is for analyzing snapshot traces, where some
+     * low-activity streams may go back in time very far, and others with more
+     * events don't go very far in time. By doing a stream intersection we drop
+     * events from less interesting periods.
+     *
+     * @param destinationPath
+     *            The location where the new trace will be created.
+     * @param monitor
+     *            Progress monitor for cases where the operation is ran from
+     *            inside a Job. You can use a
+     *            {@link org.eclipse.core.runtime.NullProgressMonitor} if none
+     *            is available.
+     * @throws CoreException
+     *             Optional exception indicating an error during the execution
+     *             of the operation.
+     * @since 2.2
+     */
+    public void streamIntersection(@NonNull Path destinationPath,  @NonNull IProgressMonitor monitor) throws CoreException {
+        /* Perform the stream intersection reading + outputting by Babeltrace */
+        // TODO Just doing "cp" for now
+
+        // TODO Querying the stream ranges could be done on the Trace Compass
+        // side. However since we need Babeltrace atm for
+        // the trace trimming, we might as well just call Babeltrace's stream
+        // intersection operation.
+        // If a Babeltrace-free trim() is implemented, this here could be
+        // modified to call trim() instead.
+        String originPath = getPath();
+        if (!originPath.endsWith(File.separator)) {
+            originPath = originPath + File.separator;
+        }
+        List<@NonNull String> command = Arrays.asList("bash", "-c", "cp -R " + originPath + "* " + destinationPath.toString()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        ProcessUtils.getOutputFromCommandCancellable(command,
+                monitor,
+                "Invoking external tool",
+                // We don't care about the output atm
+                (r, m) -> Collections.emptyList());
+    }
+
+    /**
      * @since 2.2
      */
     @Override
