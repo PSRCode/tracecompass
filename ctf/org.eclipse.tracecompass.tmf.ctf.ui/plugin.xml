@@ -20,6 +20,9 @@
                      <instanceof
                            value="org.eclipse.tracecompass.tmf.ui.project.model.TmfTraceElement">
                      </instanceof></iterate>
+                  <test
+                        property="org.eclipse.tracecompass.tmf.ctf.ui.elementIsCtfTrace">
+                  </test>
                </and>
             </visibleWhen>
          </command>
@@ -39,6 +42,16 @@
             class="org.eclipse.tracecompass.internal.tmf.ctf.ui.streamintersection.StreamIntersectionHandler"
             commandId="org.eclipse.tracecompass.tmf.ctf.ui.command.stream_intersection">
       </handler>
+   </extension>
+   <extension
+         point="org.eclipse.core.expressions.propertyTesters">
+      <propertyTester
+            class="org.eclipse.tracecompass.internal.tmf.ctf.ui.streamintersection.CtfTmfTracePropertyTester"
+            id="org.eclipse.tracecompass.tmf.ctf.ui.propertytester.elementIsCtfTrace"
+            namespace="org.eclipse.tracecompass.tmf.ctf.ui"
+            properties="elementIsCtfTrace"
+            type="org.eorg.eclipse.tracecompass.tmf.ctf.uiclipse.tracecompass.tmf.ui.project.model.TmfTraceElement">
+      </propertyTester>
    </extension>
 
 </plugin>
