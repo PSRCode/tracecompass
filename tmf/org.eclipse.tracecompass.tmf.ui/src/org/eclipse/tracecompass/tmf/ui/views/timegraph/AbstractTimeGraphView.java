@@ -1923,6 +1923,16 @@ public abstract class AbstractTimeGraphView extends TmfView implements ITmfTimeA
     }
 
     /**
+     * Gets the trace to viewer filters map.
+     *
+     * @return The trace to viewer filters map
+     * @since 2.2
+     */
+    protected @NonNull Map<ITmfTrace, ViewerFilter[]> getFiltersMap() {
+        return checkNotNull(fFiltersMap);
+    }
+
+    /**
      * Refresh the display
      */
     protected void refresh() {
@@ -1936,6 +1946,9 @@ public abstract class AbstractTimeGraphView extends TmfView implements ITmfTimeA
                     return;
                 }
                 fDirty.incrementAndGet();
+
+                /* Update view filters */
+                updateFilters();
 
                 boolean hasEntries = false;
                 synchronized (fEntryListMap) {
@@ -2021,6 +2034,18 @@ public abstract class AbstractTimeGraphView extends TmfView implements ITmfTimeA
                 LOGGER.info(() -> getLogMessage("RefreshEnd", null)); //$NON-NLS-1$
             }
         });
+    }
+
+    /**
+     * Update view specific filters. A view that possess filter should override
+     * this method to gain access to asynchronous update on refresh
+     *
+     * @since 2.2
+     */
+    protected void updateFilters() {
+        /*
+         * Do nothing. Sub classes are responsible for their view specific filters.
+         */
     }
 
     /**

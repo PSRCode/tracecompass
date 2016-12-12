@@ -20,7 +20,9 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -31,6 +33,7 @@ import org.eclipse.tracecompass.analysis.os.linux.core.kernel.StateValues;
 import org.eclipse.tracecompass.analysis.os.linux.core.tests.stubs.LinuxTestCase;
 import org.eclipse.tracecompass.analysis.os.linux.core.tests.stubs.kernel.KernelAnalysisTestFactory;
 import org.eclipse.tracecompass.statesystem.core.interval.ITmfStateInterval;
+import org.eclipse.tracecompass.statesystem.core.interval.TmfStateInterval;
 import org.eclipse.tracecompass.statesystem.core.statevalue.ITmfStateValue;
 import org.eclipse.tracecompass.statesystem.core.statevalue.TmfStateValue;
 import org.eclipse.tracecompass.tmf.core.analysis.IAnalysisModule;
@@ -43,6 +46,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
 /**
@@ -159,6 +163,47 @@ public class KernelThreadInformationProviderTest {
     }
 
     /**
+     * Test the {@link KernelThreadInformationProvider#getThreadsOfCpus} method.
+     */
+    @Test
+    public void testGetThreadsOfCpus() {
+        KernelAnalysisModule module = checkNotNull(fModule);
+        final long start = 45L;
+        final long end = 65L;
+
+        Set<Integer> tids = KernelThreadInformationProvider.getThreadsOfCpus(module, Collections.singleton(0L), start, end);
+        assertNotNull(tids);
+        /*
+         * Only threads 11 should be present, due to the sched_switch at t=35.
+         */
+        assertEquals(Collections.singleton(11), tids);
+
+        tids = KernelThreadInformationProvider.getThreadsOfCpus(module, Collections.singleton(1L), start, end);
+        assertNotNull(tids);
+        /* Threads 21 and 30 get scheduled on CPU 1 in the range. */
+        assertEquals(ImmutableSet.of(21, 30), tids);
+    }
+
+    /**
+     * Test the {@link KernelThreadInformationProvider#getActiveThreadsForRange}
+     * method.
+     */
+    @Test
+    public void testIsThreadActiveRange() {
+        KernelAnalysisModule module = checkNotNull(fModule);
+        final long start = 45L;
+        final long end = 65L;
+
+        /*
+         * Threads 11 (running on CPU 0), 21 (wait_for_cpu) and 30 (running on
+         * CPU 1) should be active in the range.
+         */
+        Set<Integer> tids = KernelThreadInformationProvider.getActiveThreadsForRange(module, start, end);
+        assertNotNull(tids);
+        assertEquals(ImmutableSet.of(11, 21, 30), tids);
+    }
+
+    /**
      * Test the
      * {@link KernelThreadInformationProvider#getParentPid(KernelAnalysisModule, Integer, long)}
      * method
@@ -235,6 +280,19 @@ public class KernelThreadInformationProviderTest {
         }
     }
 
+    private static void compareIntervals(List<ITmfStateInterval> expecteds, List<ITmfStateInterval> actuals) {
+        assertEquals(expecteds.size(), actuals.size());
+        for (int i = 0; i < expecteds.size(); i++) {
+            ITmfStateInterval expected = expecteds.get(i);
+            ITmfStateInterval actual = actuals.get(i);
+
+            /* Only compare bounds and value, attribute doesn't matter here */
+            assertEquals(expected.getStartTime(), actual.getStartTime());
+            assertEquals(expected.getEndTime(), actual.getEndTime());
+            assertEquals(expected.getStateValue(), actual.getStateValue());
+        }
+    }
+
     /**
      * Test the
      * {@link KernelThreadInformationProvider#getStatusIntervalsForThread(KernelAnalysisModule, Integer, long, long, long, IProgressMonitor)}
@@ -263,7 +321,7 @@ public class KernelThreadInformationProviderTest {
         assertTrue(intervals.isEmpty());
 
         /* Check different time ranges and resolutions */
-        ITmfStateValue[] values = { TmfStateValue.nullValue(), StateValues.PROCESS_STATUS_WAIT_FOR_CPU_VALUE,
+        ITmfStateValue[] values = { TmfStateValue.nullValue(), StateValues.PROCESS_STATUS_WAIT_BLOCKED_VALUE,
                 StateValues.PROCESS_STATUS_RUN_USERMODE_VALUE, StateValues.PROCESS_STATUS_WAIT_FOR_CPU_VALUE,
                 StateValues.PROCESS_STATUS_RUN_USERMODE_VALUE };
         intervals = KernelThreadInformationProvider.getStatusIntervalsForThread(module, process21, 0, 70L, 3, monitor);
@@ -274,22 +332,29 @@ public class KernelThreadInformationProviderTest {
         intervals = KernelThreadInformationProvider.getStatusIntervalsForThread(module, process21, 1, 70L, 30, monitor);
         testIntervals("tid 21 [0,70,30]", intervals, values2);
 
-        ITmfStateValue[] values3 = { StateValues.PROCESS_STATUS_WAIT_FOR_CPU_VALUE,
+        ITmfStateValue[] values3 = { StateValues.PROCESS_STATUS_WAIT_BLOCKED_VALUE,
                 StateValues.PROCESS_STATUS_RUN_USERMODE_VALUE };
         intervals = KernelThreadInformationProvider.getStatusIntervalsForThread(module, process21, 25, 50L, 3, monitor);
         testIntervals("tid 21 [25,50,3]", intervals, values3);
 
-        ITmfStateValue[] values4 = { TmfStateValue.nullValue(), StateValues.PROCESS_STATUS_WAIT_UNKNOWN_VALUE,
-                StateValues.PROCESS_STATUS_RUN_USERMODE_VALUE, StateValues.PROCESS_STATUS_WAIT_FOR_CPU_VALUE };
+        ImmutableList<ITmfStateInterval> expectedIntervals = ImmutableList.of(
+                new TmfStateInterval( 1,  9, 0, TmfStateValue.nullValue()),
+                new TmfStateInterval(10, 19, 0, StateValues.PROCESS_STATUS_WAIT_UNKNOWN_VALUE),
+                new TmfStateInterval(20, 29, 0, StateValues.PROCESS_STATUS_RUN_USERMODE_VALUE),
+                new TmfStateInterval(30, 69, 0, StateValues.PROCESS_STATUS_WAIT_BLOCKED_VALUE)
+                );
         intervals = KernelThreadInformationProvider.getStatusIntervalsForThread(module, process20, 0, 70L, 3, monitor);
-        testIntervals("tid 20 [0,70,3]", intervals, values4);
+        compareIntervals(expectedIntervals, intervals);
 
-        ITmfStateValue[] values5 = { TmfStateValue.nullValue(), StateValues.PROCESS_STATUS_WAIT_FOR_CPU_VALUE };
+        expectedIntervals = ImmutableList.of(
+                new TmfStateInterval( 1,  9, 0, TmfStateValue.nullValue()),
+                new TmfStateInterval(30, 69, 0, StateValues.PROCESS_STATUS_WAIT_BLOCKED_VALUE)
+                );
         intervals = KernelThreadInformationProvider.getStatusIntervalsForThread(module, process20, 1, 70L, 30, monitor);
-        testIntervals("tid 20 [0,70,30]", intervals, values5);
+        compareIntervals(expectedIntervals, intervals);
 
         ITmfStateValue[] values6 = { StateValues.PROCESS_STATUS_RUN_USERMODE_VALUE,
-                StateValues.PROCESS_STATUS_WAIT_FOR_CPU_VALUE };
+                StateValues.PROCESS_STATUS_WAIT_BLOCKED_VALUE };
         intervals = KernelThreadInformationProvider.getStatusIntervalsForThread(module, process20, 25, 50L, 3, monitor);
         testIntervals("tid 20 [25,50,3]", intervals, values6);
 

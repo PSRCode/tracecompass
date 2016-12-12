@@ -49,6 +49,7 @@ public class LttngEventLayout implements IKernelAnalysisEventLayout {
     private static final String SCHED_TTWU = "sched_ttwu";
     private static final String SCHED_WAKEUP = "sched_wakeup";
     private static final String SCHED_WAKEUP_NEW = "sched_wakeup_new";
+    private static final String SCHED_MIGRATE_TASK = "sched_migrate_task";
     private static final Collection<String> SCHED_WAKEUP_EVENTS =
             ImmutableList.of(SCHED_WAKEUP, SCHED_WAKEUP_NEW);
 
@@ -351,6 +352,11 @@ public class LttngEventLayout implements IKernelAnalysisEventLayout {
     @Override
     public String eventSchedProcessWakeupNew() {
         return SCHED_WAKEUP_NEW;
+    }
+
+    @Override
+    public String eventSchedMigrateTask() {
+        return SCHED_MIGRATE_TASK;
     }
 
     @Override
