@@ -629,7 +629,7 @@ public class TimeGraphScale extends TimeGraphBaseControl implements
     public synchronized void setPinned(boolean pinned) {
         /* When pinned disable user interaction */
         boolean enabled = !pinned;
-        fIsUserInteractionEnabled = enabled;
+        //fIsUserInteractionEnabled = enabled;
     }
 }
 

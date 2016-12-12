@@ -67,6 +67,7 @@ import org.eclipse.tracecompass.internal.tmf.ui.Activator;
 import org.eclipse.tracecompass.internal.tmf.ui.ITmfImageConstants;
 import org.eclipse.tracecompass.internal.tmf.ui.Messages;
 import org.eclipse.tracecompass.internal.tmf.ui.dialogs.AddBookmarkDialog;
+import org.eclipse.tracecompass.tmf.core.timestamp.TmfTimestamp;
 import org.eclipse.tracecompass.tmf.ui.signal.TmfTimeViewAlignmentInfo;
 import org.eclipse.tracecompass.tmf.ui.viewers.TmfViewer;
 import org.eclipse.tracecompass.tmf.ui.views.ITmfTimeAligned;
@@ -1117,6 +1118,8 @@ public class TimeGraphViewer extends TmfViewer implements ITimeDataProvider, IMa
         if (fListenerNotifier != null && fListenerNotifier.hasTimeSelected()) {
             return;
         }
+        System.out.println("T Begin:" + TmfTimestamp.fromNanos(beginTime).toString());
+        System.out.println("T End  :" + TmfTimestamp.fromNanos(beginTime).toString());
         setSelectionRangeInt(beginTime, endTime, ensureVisible, false);
     }
 
@@ -2727,70 +2730,70 @@ public class TimeGraphViewer extends TmfViewer implements ITimeDataProvider, IMa
     @Override
     public synchronized void setPinned(boolean pinned) {
         super.setPinned(pinned);
-        boolean enabled = !pinned;
+        //boolean enabled = !pinned;
 
-        fTimeGraphCtrl.setPinned(pinned);
-        fTimeScaleCtrl.setPinned(pinned);
-        fMarkerAxisCtrl.setPinned(pinned);
+        //fTimeGraphCtrl.setPinned(pinned);
+        //fTimeScaleCtrl.setPinned(pinned);
+        //fMarkerAxisCtrl.setPinned(pinned);
 
-        fHorizontalScrollBar.setEnabled(enabled);
-        fHorizontalScrollBar.setVisible(enabled);
+//        fHorizontalScrollBar.setEnabled(enabled);
+//        fHorizontalScrollBar.setVisible(enabled);
 
-        fMouseWheelListeners.setHorizontalScrollEnabled(enabled);
-        fMouseWheelListeners.setZoomEnabled(enabled);
+//        fMouseWheelListeners.setHorizontalScrollEnabled(enabled);
+//        fMouseWheelListeners.setZoomEnabled(enabled);
 
-        fKeyListeners.setAllEnabled(enabled);
+//        fKeyListeners.setAllEnabled(enabled);
 
-        fMarkersMenu.setVisible(enabled);
+//        fMarkersMenu.setVisible(enabled);
 
-        if (enabled) {
-            fCurrentBookmark.clear();
-            fCurrentBookmark.addAll(fSyncedBookmark);
-        }
-
-        if (fResetScaleAction != null) {
-            fResetScaleAction.setEnabled(enabled);
-        }
-        if (fShowLegendAction != null) {
-            fShowLegendAction.setEnabled(enabled);
-        }
-        if (fNextEventAction != null) {
-            fNextEventAction.setEnabled(enabled);
-        }
-        if (fPrevEventAction != null) {
-            fPrevEventAction.setEnabled(enabled);
-        }
-        if (fNextItemAction != null) {
-            fNextItemAction.setEnabled(enabled);
-        }
-        if (fPreviousItemAction != null) {
-            fPreviousItemAction.setEnabled(enabled);
-        }
-        if (fZoomInAction != null) {
-            fZoomInAction.setEnabled(enabled);
-        }
-        if (fZoomOutAction != null) {
-            fZoomOutAction.setEnabled(enabled);
-        }
-        if (fHideArrowsAction != null) {
-            fHideArrowsAction.setEnabled(enabled);
-        }
-        if (fFollowArrowFwdAction != null) {
-            fFollowArrowFwdAction.setEnabled(enabled);
-        }
-        if (fFollowArrowBwdAction != null) {
-            fFollowArrowBwdAction.setEnabled(enabled);
-        }
-        if (fShowFilterDialogAction != null) {
-            fShowFilterDialogAction.setEnabled(enabled);
-        }
-        if (fToggleBookmarkAction != null) {
-            fToggleBookmarkAction.setEnabled(enabled);
-        }
-
-        fShowMarkerActionsEnabled = enabled;
-        fMarkersUpdateEnabled = enabled;
-        updateMarkerActions();
+//        if (enabled) {
+//            fCurrentBookmark.clear();
+//            fCurrentBookmark.addAll(fSyncedBookmark);
+//        }
+//
+//        if (fResetScaleAction != null) {
+//            fResetScaleAction.setEnabled(enabled);
+//        }
+//        if (fShowLegendAction != null) {
+//            fShowLegendAction.setEnabled(enabled);
+//        }
+//        if (fNextEventAction != null) {
+//            fNextEventAction.setEnabled(enabled);
+//        }
+//        if (fPrevEventAction != null) {
+//            fPrevEventAction.setEnabled(enabled);
+//        }
+//        if (fNextItemAction != null) {
+//            fNextItemAction.setEnabled(enabled);
+//        }
+//        if (fPreviousItemAction != null) {
+//            fPreviousItemAction.setEnabled(enabled);
+//        }
+//        if (fZoomInAction != null) {
+//            fZoomInAction.setEnabled(enabled);
+//        }
+//        if (fZoomOutAction != null) {
+//            fZoomOutAction.setEnabled(enabled);
+//        }
+//        if (fHideArrowsAction != null) {
+//            fHideArrowsAction.setEnabled(enabled);
+//        }
+//        if (fFollowArrowFwdAction != null) {
+//            fFollowArrowFwdAction.setEnabled(enabled);
+//        }
+//        if (fFollowArrowBwdAction != null) {
+//            fFollowArrowBwdAction.setEnabled(enabled);
+//        }
+//        if (fShowFilterDialogAction != null) {
+//            fShowFilterDialogAction.setEnabled(enabled);
+//        }
+//        if (fToggleBookmarkAction != null) {
+//            fToggleBookmarkAction.setEnabled(enabled);
+//        }
+//
+//        fShowMarkerActionsEnabled = enabled;
+//        fMarkersUpdateEnabled = enabled;
+//        updateMarkerActions();
     }
 
 }

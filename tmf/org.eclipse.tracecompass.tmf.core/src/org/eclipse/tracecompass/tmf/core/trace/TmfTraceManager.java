@@ -183,6 +183,28 @@ public final class TmfTraceManager {
         return curCtx;
     }
 
+
+    /**
+     * Get the {@link TmfTraceContext} of the specified trace. This can be used
+     * to retrieve the current active/selected time ranges and such.
+     *
+     * @param trace
+     *            The trace
+     *
+     * @return The trace's context.
+     * @since 2.2
+     */
+    public synchronized TmfTraceContext getTraceContext(ITmfTrace trace) {
+        TmfTraceContext curCtx = fTraces.get(trace);
+        if (curCtx == null) {
+            /* There are no traces opened at the moment. */
+            return TmfTraceContext.NULL_CONTEXT;
+        }
+        return curCtx;
+    }
+
+
+
     // ------------------------------------------------------------------------
     // Public utility methods
     // ------------------------------------------------------------------------

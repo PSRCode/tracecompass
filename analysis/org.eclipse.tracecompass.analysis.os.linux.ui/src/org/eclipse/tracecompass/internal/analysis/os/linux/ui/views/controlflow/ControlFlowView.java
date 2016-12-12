@@ -63,10 +63,10 @@ import org.eclipse.tracecompass.statesystem.core.interval.ITmfStateInterval;
 import org.eclipse.tracecompass.statesystem.core.statevalue.ITmfStateValue;
 import org.eclipse.tracecompass.tmf.core.event.ITmfEvent;
 import org.eclipse.tracecompass.tmf.core.signal.TmfSelectionRangeUpdatedSignal;
-import org.eclipse.tracecompass.tmf.core.signal.TmfSignal;
 import org.eclipse.tracecompass.tmf.core.signal.TmfSignalHandler;
 import org.eclipse.tracecompass.tmf.core.signal.TmfSignalManager;
 import org.eclipse.tracecompass.tmf.core.signal.TmfTraceSelectedSignal;
+import org.eclipse.tracecompass.tmf.core.signal.TmfWindowRangeUpdatedSignal;
 import org.eclipse.tracecompass.tmf.core.statesystem.TmfStateSystemAnalysisModule;
 import org.eclipse.tracecompass.tmf.core.timestamp.TmfTimestamp;
 import org.eclipse.tracecompass.tmf.core.trace.ITmfContext;
@@ -1075,9 +1075,9 @@ public class ControlFlowView extends AbstractStateSystemTimeGraphView {
 
         /* Is pinned */
         if (pinned) {
-            /* Ignore all outbound and inbound signal */
-            TmfSignalManager.addIgnoredOutboundSignal(this, TmfSignal.class);
-            TmfSignalManager.addIgnoredInboundSignal(this, TmfSignal.class);
+            /* Ignore Windows time range update signal */
+            TmfSignalManager.addIgnoredOutboundSignal(this, TmfWindowRangeUpdatedSignal.class);
+            TmfSignalManager.addIgnoredInboundSignal(this, TmfWindowRangeUpdatedSignal.class);
 
             String objectType = Messages.ControlFlowView_TraceLabel;
             if (getTrace() instanceof TmfExperiment) {
@@ -1093,17 +1093,17 @@ public class ControlFlowView extends AbstractStateSystemTimeGraphView {
             loadTrace(TmfTraceManager.getInstance().getActiveTrace());
         }
 
-        boolean enabled = !pinned;
+        //boolean enabled = !pinned;
 
-        fFlatAction.setEnabled(enabled);
-        fHierarchicalAction.setEnabled(enabled);
-        fOptimizationAction.setEnabled(enabled);
-        fPreviousEventAction.setEnabled(enabled);
-        fNextEventAction.setEnabled(enabled);
-        fThreadPresentationMenu.setVisible(enabled);
-        fThreadPresentationMenu.markDirty();
+//        fFlatAction.setEnabled(enabled);
+//        fHierarchicalAction.setEnabled(enabled);
+//        fOptimizationAction.setEnabled(enabled);
+//        fPreviousEventAction.setEnabled(enabled);
+//        fNextEventAction.setEnabled(enabled);
+//        fThreadPresentationMenu.setVisible(enabled);
+//        fThreadPresentationMenu.markDirty();
 
-        fShowFollowThreadAction = enabled;
+//        fShowFollowThreadAction = enabled;
 
         /* Propagate pin state to viewer */
         if (getTimeGraphCombo() != null) {

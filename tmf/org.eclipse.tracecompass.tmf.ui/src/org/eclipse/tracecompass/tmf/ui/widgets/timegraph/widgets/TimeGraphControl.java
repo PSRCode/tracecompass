@@ -3524,14 +3524,14 @@ public class TimeGraphControl extends TimeGraphBaseControl
 
         fUsePinnedSelectionColor = pined;
 
-        boolean enabled = !pined;
+       // boolean enabled = !pined;
 
-        fPrevEventEnabled = enabled;
-        fNextEventEnabled = enabled;
-        fGrabAndPanEnabled = enabled;
-        fSelectionZoomEnabled = enabled;
-        fHorizontalZoomEnabled = enabled;
-        fHorizontalScrollEnabled = enabled;
-        fTimeRangeSelectionEnabled = enabled;
+//        fPrevEventEnabled = enabled;
+//        fNextEventEnabled = enabled;
+//        fGrabAndPanEnabled = enabled;
+//        fSelectionZoomEnabled = enabled;
+//        fHorizontalZoomEnabled = enabled;
+//        fHorizontalScrollEnabled = enabled;
+//        fTimeRangeSelectionEnabled = enabled;
     }
 }
