@@ -9,7 +9,8 @@
  * Contributors:
  *   Bernd Hufmann - Initial API and implementation
  *******************************************************************************/
-package org.eclipse.tracecompass.internal.tmf.ui.project.operations;
+
+package org.eclipse.tracecompass.tmf.ui.project.operations;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -29,7 +30,7 @@ import org.eclipse.ui.actions.WorkspaceModifyOperation;
  * For refreshing periodically use {@link WorkspaceModifyOperation} instead.
  *
  * @author Bernd Hufmann
- *
+ * @since 2.3
  */
 public abstract class TmfWorkspaceModifyOperation implements IRunnableWithProgress {
 

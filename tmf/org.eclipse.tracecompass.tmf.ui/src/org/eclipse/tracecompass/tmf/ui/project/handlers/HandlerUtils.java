@@ -7,8 +7,9 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *******************************************************************************/
 
-package org.eclipse.tracecompass.internal.provisional.analysis.lami.ui.handler;
+package org.eclipse.tracecompass.tmf.ui.project.handlers;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionProvider;
@@ -22,7 +23,9 @@ import org.eclipse.ui.PlatformUI;
  * Utilities for UI handlers
  *
  * @author Philippe Proulx
+ * @since 2.3
  */
+@NonNullByDefault
 public final class HandlerUtils {
 
     private HandlerUtils() {

@@ -36,7 +36,10 @@ Export-Package: org.eclipse.tracecompass.lttng2.kernel.core.tests,
  org.eclipse.tracecompass.lttng2.kernel.core.tests.perf.analysis.tid,
  org.eclipse.tracecompass.lttng2.kernel.core.tests.perf.event.matching,
  org.eclipse.tracecompass.lttng2.kernel.core.tests.stubs,
+ org.eclipse.tracecompass.lttng2.kernel.core.tests.synchronization,
+ org.eclipse.tracecompass.lttng2.kernel.core.tests.trim,
  org.eclipse.tracecompass.lttng2.lttng.kernel.core.tests.shared.vm
 Import-Package: com.google.common.collect,
+ org.apache.commons.io,
  org.eclipse.test.performance,
  org.eclipse.tracecompass.testtraces.ctf;version="1.6.0"

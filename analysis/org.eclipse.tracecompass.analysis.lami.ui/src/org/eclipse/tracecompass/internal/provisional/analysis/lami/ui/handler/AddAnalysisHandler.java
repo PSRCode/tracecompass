@@ -28,6 +28,7 @@ import org.eclipse.tracecompass.internal.provisional.analysis.lami.core.module.L
 import org.eclipse.tracecompass.internal.provisional.analysis.lami.core.module.LamiAnalysisFactoryException;
 import org.eclipse.tracecompass.internal.provisional.analysis.lami.core.module.LamiAnalysisFactoryFromConfigFile;
 import org.eclipse.tracecompass.tmf.core.analysis.ondemand.OnDemandAnalysisManager;
+import org.eclipse.tracecompass.tmf.ui.project.handlers.HandlerUtils;
 import org.eclipse.tracecompass.tmf.ui.project.model.TmfOnDemandAnalysesElement;
 import org.eclipse.ui.PlatformUI;
 

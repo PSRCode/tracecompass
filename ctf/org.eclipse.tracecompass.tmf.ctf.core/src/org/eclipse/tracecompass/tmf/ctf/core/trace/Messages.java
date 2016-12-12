@@ -17,6 +17,7 @@ import org.eclipse.osgi.util.NLS;
  * Message bundle for tmf.ctf.core.trace
  *
  * @author Matthew Khouzam
+ * @noreference Messages class
  */
 public class Messages extends NLS {
 
@@ -36,6 +37,12 @@ public class Messages extends NLS {
 
     /** No event */
     public static String CtfTmfTrace_NoEvent;
+
+    /** Invoking Babeltrace message */
+    public static String CtfTmfTrace_InvokingBabeltrace;
+
+    /** Error when manually moving files */
+    public static String CtfTmfTrace_ErrorMovingFiles;
 
     static {
         // initialize resource bundle

@@ -48,7 +48,6 @@ import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.tracecompass.internal.tmf.remote.ui.Activator;
 import org.eclipse.tracecompass.internal.tmf.remote.ui.messages.RemoteMessages;
-import org.eclipse.tracecompass.internal.tmf.ui.project.operations.TmfWorkspaceModifyOperation;
 import org.eclipse.tracecompass.internal.tmf.ui.project.wizards.importtrace.ArchiveUtil;
 import org.eclipse.tracecompass.internal.tmf.ui.project.wizards.importtrace.FileSystemObjectImportStructureProvider;
 import org.eclipse.tracecompass.internal.tmf.ui.project.wizards.importtrace.IFileSystemObject;
@@ -68,6 +67,7 @@ import org.eclipse.tracecompass.tmf.ui.project.model.TmfTraceFolder;
 import org.eclipse.tracecompass.tmf.ui.project.model.TmfTraceTypeUIUtils;
 import org.eclipse.tracecompass.tmf.ui.project.model.TmfTracesFolder;
 import org.eclipse.tracecompass.tmf.ui.project.model.TraceUtils;
+import org.eclipse.tracecompass.tmf.ui.project.operations.TmfWorkspaceModifyOperation;
 import org.eclipse.ui.wizards.datatransfer.FileSystemStructureProvider;
 
 /**

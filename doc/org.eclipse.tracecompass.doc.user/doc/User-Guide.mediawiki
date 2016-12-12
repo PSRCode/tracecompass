@@ -340,6 +340,21 @@ If the wizard was opened using the File menu, the destination project has to be 
 
 When Finish is clicked, the trace is imported in the target folder. The folder structure from the trace package is restored in the target folder.
 
+
+=== Exporting Time Selection... ===
+
+If a time range (not a single timestamp) is selected in any of the time-based views, the '''Export Time Selection As...''' options become available. These options allow ''trimming'' the current trace to a subset of its events, while preserving all the states that may have been computed by various analyses using events present before the exported time range.
+
+Since trace writing works differently for every trace type, the trimming feature has to be implemented for the target trace's type. If the option remains grayed out even if a time range is selected, it is because the given trace type does not implement the trim feature.
+
+This feature currently works on individual traces only, not on experiments.
+
+==== ...as New Trace ====
+
+The '''Exporting Time Selection as New Trace''' option will create a new trace and import it into the current tracing project. A directory-selection dialog will be presented to the user to define where the new trace should be written. ''Make sure you have write permissions to the selected directory!'' This directory is where the new trace files will be written, as well as any appropriate ''statedump'' files.
+
+The new trace will be initially named the same as the originating one, with ''-trimmed'' appended at the end (and ''-2'', ''-3'', etc. indexes if needed to avoid name clashes). The user is then free to rename the new trace. The trace can also be removed from the project and reimported later with no loss of information.
+
 === Refreshing of Trace and Trace Folder ===
 Traces and trace folders in the workspace might be updated on the media. To refresh the content, right-click the trace or trace folder and select menu item '''Refresh'''. Alternatively, select the trace or trace folder and press key '''F5'''.
 
